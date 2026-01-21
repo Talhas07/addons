@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <template id="external_layout_cordlength">
+            <!-- div t-attf-class="header o_company_#{company.id}_layout" t-att-style="report_header_style" -->
+                <!-- div class="row">
+                    <div class="col-xs-4" style="float:left;">
+                        <img t-if="company.logo" t-att-src="'data:image/png;base64,%s' % company.logo" style="max-width:290px;"/>
+                    </div>
+                    <div style="float:right;" class="col-xs-8">
+                        <div class="col-xs-5" style="font-size:80%;color:darkblue;float:left;">
+                            <div t-field="company.partner_id"
+                                t-field-options='{"widget": "contact", "fields": ["address"], "no_marker": true}'/>
+                        </div>
+                        <div class="col-xs-7" style="float:right;margin-top:10px;">
+                            <span t-if="doc_model =='sale.order'">
+                                <span t-if="o.state not in ['draft','sent']"><h2><strong>SALES ORDER</strong></h2></span>
+                                <span t-if="o.state in ['draft','sent']"><h2><strong>QUOTATION</strong></h2> </span>
+                            </span>
+                            <span t-if="doc_model =='account.move'">
+                                <h2><strong>
+                                <span t-if="o.type == 'out_invoice' and (o.state == 'open' or o.state == 'paid')">TAX INVOICE</span>
+                                <span t-if="o.type == 'out_invoice' and o.state == 'proforma2'">PRO-FORMA</span>
+                                <span t-if="o.type == 'out_invoice' and o.state == 'draft'">DRAFT INVOICE</span>
+                                <span t-if="o.type == 'out_invoice' and o.state == 'cancel'">CANCELLED INVOICE</span>
+                                <span t-if="o.type == 'out_refund'">REFUND</span>
+                                <span t-if="o.type == 'in_refund'">SUPPLIER REFUND</span>
+                                <span t-if="o.type == 'in_invoice'">SUPPLIER INVOICE</span>
+                                </strong></h2><p/>
+                            </span>
+                            <span t-if="doc_model =='purchase.order'">
+                                <h2><strong>
+                                    <span t-if="o.state != 'draft'">PURCHASE ORDER</span>
+                                    <span t-if="o.state == 'draft'">REQUEST FOR QUOTE </span>
+                                </strong></h2>
+                            </span>
+                            <span t-if="doc_model =='stock.picking'">
+                                <h2><strong>
+                                    <span>DELIVERY NOTE</span>
+                                </strong></h2>
+                            </span>
+                        </div>
+                    </div>   
+                </div -->         
+                <!-- div class="row" style="font-size:80%;color:darkblue;">
+                    <div class="col-xs-2">Tel:<span t-field="company.phone"/></div>
+                    <div class="col-xs-2">Mobile:<span t-field="company.mobile"/></div>
+                    <div class="col-xs-3">Email:<span t-field="company.email"/></div>
+                    <div class="col-xs-3">VAT No.:<span t-field="company.vat"/></div>
+                </div>
+                <div class="row zero_min_height">
+                    <div class="col-xs-12">
+                        <div style="border-bottom: 1px solid black;"></div>
+                    </div>
+                </div>
+            </div -->
+            <div t-attf-class="header o_company_#{company.id}_layout" t-att-style="report_header_style">
+                <div class="row">
+                    <div class="col-3 mb4">
+                        <img t-if="company.logo" t-att-src="image_data_uri(company.logo)" style="max-height: 90px;" alt="Logo"/>
+                    </div>
+                    <!-- div class="col-9 text-end" style="margin-top:22px;" t-field="company.report_header" name="moto"/ -->
+                    <div class="col-6" name="company_address">
+                        <!-- span t-if="company.company_details" t-field="company.company_details"></span>
+                        <span t-else="" t-field="company.partner_id"
+                                t-options='{"widget": "contact", "fields": ["address", "name"], "no_marker": true}'/ -->
+                        <h2><span style="color: red" t-field="company.name"/><br/></h2>
+                        <i class="fa fa-map-marker" style="color: red"></i> <span t-field="company.street"/> <span t-field="company.street2"/> <span t-field="company.city"/><br/>
+                        <i class="fa fa-phone" style="color: red"></i> <span t-field="company.phone"/> / <span t-field="company.mobile"/><br/>
+                        <i class="fa fa-envelope" style="color: red"></i> <span t-field="company.email"/>
+                    </div>
+                    <div class="col-3 mb4" style="text-align: right;">
+                        <img t-att-src="'/cord_len/static/src/img/header_top_right.PNG'" style="max-height: 90px;" alt="Logo"/>
+                    </div>
+                </div>
+                <div t-if="company.logo or company.report_header" class="row zero_min_height">
+                    <div class="col-12">
+                        <div style="border-bottom: 1px solid black;"/>
+                    </div>
+                </div>
+                <div class="row">
+                    
+                </div>
+            </div>
+        
+            <div t-attf-class="article o_report_layout_standard o_company_#{company.id}_layout {{  'o_report_layout_background' if company.layout_background in ['Geometric', 'Custom']  else  '' }}" t-attf-style="background-image: url({{ 'data:image/png;base64,%s' % company.layout_background_image.decode('utf-8') if company.layout_background_image and company.layout_background == 'Custom' else '/base/static/img/bg_background_template.jpg' if company.layout_background == 'Geometric' else ''}});" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id" t-att-data-oe-lang="o and o.env.context.get('lang')">
+                <div class="pt-5">
+                    <!-- This div ensures that the address is not cropped by the header. -->
+                    <t t-call="web.address_layout" />
+                </div>
+                <t t-out="0"/>
+            </div>
+
+            <div t-attf-class="footer o_standard_footer o_company_#{company.id}_layout">
+                <div class="text-center" style="border-top: 1px solid black;">
+                    <ul class="list-inline mb4">
+                        <div t-field="company.report_footer"/>
+                    </ul>
+                    <div t-if="report_type == 'pdf'" class="text-muted">
+                        Page: <span class="page"/> / <span class="topage"/>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+    </data>
+</odoo>

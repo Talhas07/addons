@@ -1,0 +1,16 @@
+<odoo>
+  <data>
+
+    <record id="view_invoice_tree_20230525" model="ir.ui.view">
+      <field name="name">account.move.cordlen20230525</field>
+      <field name="model">account.move</field>
+      <field name="inherit_id" ref="account.view_out_invoice_tree" />
+      <field name="arch" type="xml">
+        <xpath expr="//field[@name='currency_id']" position="after">
+          <field name="repair_ids" widget="many2many_tags"/>
+        </xpath>
+      </field>
+    </record>
+
+  </data>
+</odoo>

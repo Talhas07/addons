@@ -1,0 +1,29 @@
+<odoo>
+    <data noupdate="1">
+
+        <!-- Technicians: Can only see their assigned Job Cards -->
+        <record id="job_card_technician_rule" model="ir.rule">
+            <field name="name">Technician: View Own Job Cards</field>
+            <field name="model_id" ref="model_job_card"/>
+            <field name="groups" eval="[(4, ref('repair_management.group_repair_technicians'))]"/>
+            <field name="domain_force">[('technician_id.user_id', '=', user.id)]</field>
+        </record>
+
+        <!-- Supervisors: Can view Job Cards of Technicians under them -->
+        <record id="job_card_supervisor_rule" model="ir.rule">
+            <field name="name">Supervisor: View Technicians' Job Cards</field>
+            <field name="model_id" ref="model_job_card"/>
+            <field name="groups" eval="[(4, ref('repair_management.group_repair_supervisors'))]"/>
+            <field name="domain_force">[('technician_id.parent_id.user_id', '=', user.id)]</field>
+        </record>
+
+        <!-- Top Management: Full Access -->
+        <record id="job_card_top_management_rule" model="ir.rule">
+            <field name="name">Top Management: Full Access</field>
+            <field name="model_id" ref="model_job_card"/>
+            <field name="groups" eval="[(4, ref('repair_management.group_top_management'))]"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+        </record>
+
+    </data>
+</odoo>

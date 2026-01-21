@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_invoice_asset_category" model="ir.ui.view">
+        <field name="name">account.move.asset.category.inherit</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Invoice lines -->
+            <xpath expr="//field[@name='invoice_line_ids']//field[@name='account_id']"
+                   position="before">
+                <field name="asset_category_id"
+                       string="Asset Category"
+                       force_save="1"
+                       domain="[('type','=','purchase')]"
+                       context="{'default_type':'purchase'}"/>
+            </xpath>
+
+            <!-- Journal items (line_ids) -->
+            <xpath expr="//field[@name='line_ids']//field[@name='account_id']"
+                   position="before">
+                <field name="asset_category_id"
+                       string="Asset Category"
+                       invisible="1"/>
+            </xpath>
+
+        </field>
+    </record>
+
+</odoo>

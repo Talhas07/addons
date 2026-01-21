@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+<data>
+    <record id="whatsapp_template_view_form" model="ir.ui.view">
+        <field name="name">whatsapp.template.view.form</field>
+        <field name="model">whatsapp.template</field>
+        <field name="arch" type="xml">
+            <form string="WhatsApp Templates">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <field name="sidebar_action_id" invisible="1"/>
+                        <button name="action_create_sidebar_action" type="object"
+                                groups="base.group_system"
+                                class="oe_stat_button"
+                                attrs="{'invisible':[('sidebar_action_id','!=',False)]}" icon="fa-plus"
+                                help="Add a contextual action on the related model to open a whatsapp composer with this template">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Add</span>
+                                <span class="o_stat_text">Context Action</span>
+                            </div>
+                        </button>
+                        <button name="action_unlink_sidebar_action" type="object"
+                                groups="base.group_system"
+                                class="oe_stat_button" icon="fa-minus"
+                                attrs="{'invisible':[('sidebar_action_id','=',False)]}"
+                                help="Remove the contextual action of the related model" widget="statinfo">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Remove</span>
+                                <span class="o_stat_text">Context Action</span>
+                            </div>
+                        </button>
+                        <button class="oe_stat_button" name="%(whatsapp_template_preview_action)d" icon="fa-search-plus" string="Preview" type="action" target="new"/>
+                    </div>
+                    <div class="oe_title">
+                        <label for="name" string="WhatsApp Template"/>
+                        <h1><field name="name" placeholder="e.g. Calendar Reminder" required="1"/></h1>
+                        <group>
+                            <field name="model_id" placeholder="e.g. Contact" required="1" options="{'no_create': True}"/>
+                            <field name="model" invisible="1"/>
+                            <field name="lang" groups="base.group_no_one" placeholder="e.g. en_US or {{ object.partner_id.lang }}"/>
+                        </group>
+                    </div>
+                    <notebook>
+                        <page string="Content" name="msg_content">
+                            <field name="body" nolabel="1" style="height:150px;width:100%;"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="whatsapp_template_view_tree" model="ir.ui.view">
+        <field name="name">whatsapp.template.view.tree</field>
+        <field name="model">whatsapp.template</field>
+        <field name="arch" type="xml">
+             <list string="WhatsApp Templates">
+                <field name="name"/>
+                <field name="model_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="whatsapp_template_view_search" model="ir.ui.view">
+        <field name="name">whatsapp.template.view.search</field>
+        <field name="model">whatsapp.template</field>
+        <field name="arch" type="xml">
+            <search string="Search WhatsApp Templates">
+                <field name="name"/>
+                <field name="model_id"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="whatsapp_template_action" model="ir.actions.act_window">
+        <field name="name">WhatsApp Templates</field>
+        <field name="res_model">whatsapp.template</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="whatsapp_setting_menu"
+        name="WhatsApp"
+        parent="base.menu_custom"
+        sequence="1"/>
+    <menuitem id="whatsapp_template_menu"
+        name="WhatsApp Templates"
+        parent="whatsapp_integration.whatsapp_setting_menu"
+        sequence="2"
+        action="whatsapp_template_action"/>
+
+</data>
+</odoo>

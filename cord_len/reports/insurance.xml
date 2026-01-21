@@ -1,0 +1,83 @@
+<odoo>
+  <template id = "report_repair_insurance">
+    <t t-call = "web.html_container">
+      <t t-foreach = "docs" t-as = "o"/>
+      <t t-call = "web.external_layout">
+        <div class = "page">
+          <p>Customer name : <span t-esc="o.partner_id.name"/> </p>
+          <p>Customer details : <span t-esc="o.partner_id.street"/>, <span t-esc="o.partner_id.street2"/>, <span t-esc="o.partner_id.city"/> </p>
+          <br/><br/>
+          <p>Date : <span t-esc="o.schedule_date" t-esc-options="{&quot;format&quot;: &quot;dd/MM/yyyy&quot;}" /> </p>
+          <br/><br/>
+          <p>Dear Sir/Madam, </p>
+          <br/><br/>
+          <p><b><FONT COLOR="#FF0000">RE: WORKSHOP REPORT</FONT></b></p>
+          <br/><br/>
+
+          <style>
+            tr, td {
+              border-bottom: 2px solid black;
+              border-left: 2px solid black;
+              background-color; #5A5A5A;
+              border-right: 2px solid black;
+              border-top: 2px solid black;
+              background-color: #5A5A5A;
+            }
+          </style>
+
+          <table class="gray">
+            <tr>
+              <td style="color: white">Date of diagnosis: </td>
+              <td style="background-color: #ffffff"><span t-esc="o.create_date.strftime('%d/%m/%Y')"/></td>
+              <td style="color: white">Model: </td>
+              <td style="background-color: #ffffff"><span t-esc="o.product_id.name"/></td>
+            </tr>
+            <tr>
+              <td style="color: white">Customer: </td>
+              <td style="background-color: #ffffff"><span t-esc="o.partner_id.name"/></td>
+              <td style="color: white">Serial: </td>
+              <td style="background-color: #ffffff"><span t-esc="o.product_bar_code"/></td>
+            </tr>
+
+            <tr>    
+            <td style="color: white">Fault: </td>
+            <td style="background-color: #ffffff"><span t-esc="o.description"/></td>
+            <td style="color: white">Job number: </td>
+            <td style="background-color: #ffffff"><span t-esc="o.customer_reference"/></td>
+            </tr>
+          </table>
+          <br/><br/>
+
+          <p><b>QUOTE, FIX AND SUPPLY</b></p>
+          <p><span t-esc="o.description"/>: P<span t-esc="o.amount_total"/> </p>
+          <br/><br/>
+
+          <tbody>
+            <tr>
+              <td style="color: white">Approved by: </td>
+              <td style="background-color: white"></td>
+            </tr>
+            <br/>
+            <tr>
+              <td style="color: white">Signature: </td>
+              <td style="background-color: white"></td>
+            </tr>
+            </tbody>
+          <br/><br/><br/>
+
+          <p>Kind Regards</p>
+        </div>
+      </t>
+    </t>
+  </template>
+
+  <record id = "school_admin_action" model = "ir.actions.report">
+      <field name = "name">Repair Insurance Report</field>
+      <field name = "model">repair.order</field>
+      <field name = "report_type">qweb-pdf</field>
+      <field name = "report_name">cord_len.report_repair_insurance</field>
+      <field name = "report_file">Insurance Report</field>
+      <field name = "binding_model_id" ref = "model_repair_order"/>
+      <field name = "binding_type">report</field>
+  </record>
+</odoo>

@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_cord_len_cord_len,cord_len.cord_len,model_cord_len_cord_len,base.group_user,1,1,1,1

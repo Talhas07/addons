@@ -1,0 +1,76 @@
+<odoo>
+    <!-- Sequence for Job Card -->
+    <record id="seq_job_card" model="ir.sequence">
+        <field name="name">Job Card</field>
+        <field name="code">job.card</field>
+        <field name="prefix">JOB-</field>
+        <field name="padding">5</field>
+    </record>
+
+    <!-- Job Card Form View -->
+    <record id="view_job_card_form" model="ir.ui.view">
+        <field name="name">job.card.form</field>
+        <field name="model">job.card</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <!-- Main Group -->
+                    <group>
+                        <field name="name" readonly="True"/>
+                        <field name="product_bar_code" readonly="True"/>
+                        <field name="technician_id" readonly="True"/>
+                        <field name="product_id"/>
+                        <field name="description"/>
+                        <field name="customer_reference"/>
+                    </group>
+
+                    <!-- Diagnosis Section -->
+                    <group string="Diagnosis">
+                        <field name="diagnosis_notes" 
+                               readonly="diagnosis_submitted"/>
+                        <field name="diagnosis_images" widget="image" 
+                               readonly="diagnosis_submitted"/>
+                    </group>
+
+                    <!-- Status Section -->
+                    <group string="Status">
+                        <field name="status"/>
+                        <field name="date_assigned" readonly="True"/>
+                        <field name="date_completed" readonly="True"/>
+                    </group>
+
+                    <!-- Invisible Fields -->
+                    <field name="diagnosis_submitted" invisible="1"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Job Card List View -->
+    <record id="view_job_card_list" model="ir.ui.view">
+        <field name="name">job.card.list</field>
+        <field name="model">job.card</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="product_bar_code"/>
+                <field name="technician_id"/>
+                <field name="status"/>
+                <field name="date_assigned"/>
+                <field name="customer_reference"/>
+                <field name="active" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Action for Job Card -->
+    <record id="action_job_card" model="ir.actions.act_window">
+        <field name="name">Job Cards</field>
+        <field name="res_model">job.card</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- Menu Items -->
+    <menuitem id="menu_repair_root" name="Repair Management" sequence="1" groups="base.group_user"/>
+    <menuitem id="menu_job_card" name="Job Cards" parent="menu_repair_root" action="action_job_card" sequence="2" groups="base.group_user"/>
+</odoo>
