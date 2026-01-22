@@ -33,7 +33,6 @@
                             <field name="supplier_invoice_ref"/>
                             <field name="purchase_date"/>
                             <field name="warranty_status"/>
-                            <field name="is_under_warranty" readonly="1"/>
                         </group>
                     </group>
                 </xpath>
@@ -60,7 +59,7 @@
                 </xpath>
                 
                 <!-- Add Diagnosis tab in notebook -->
-                <xpath expr="//page[@name='parts']" position="before">
+                <xpath expr="//notebook" position="inside">
                     <page string="Diagnosis" name="diagnosis">
                         <group>
                             <group string="Fault Information">
@@ -118,8 +117,8 @@
                     <field name="supplier_id" optional="hide"/>
                 </xpath>
                 
-                <!-- Add Warranty Status -->
-                <xpath expr="//field[@name='guarantee_limit']" position="after">
+                <!-- Add Warranty Status after state -->
+                <xpath expr="//field[@name='state']" position="after">
                     <field name="warranty_status" optional="hide" widget="badge" 
                            decoration-success="warranty_status == 'valid'"
                            decoration-danger="warranty_status == 'expired'"
@@ -144,18 +143,13 @@
                 </xpath>
                 
                 <!-- Add filters -->
-                <xpath expr="//filter[@name='invoiced']" position="after">
-                    <separator/>
-                    <filter string="Under Warranty" name="under_warranty" 
-                            domain="[('is_under_warranty', '=', True)]"/>
-                    <filter string="Warranty Expired" name="warranty_expired" 
-                            domain="[('warranty_status', '=', 'expired')]"/>
+                <xpath expr="//separator[1]" position="after">
                     <filter string="Has Diagnosis" name="has_diagnosis" 
                             domain="[('diagnosis_date', '!=', False)]"/>
                 </xpath>
                 
                 <!-- Add group by options -->
-                <xpath expr="//filter[@name='guarantee_limit']" position="after">
+                <xpath expr="//group[@string='Group By']" position="inside">
                     <filter string="Supplier" name="group_supplier" domain="[]" 
                             context="{'group_by': 'supplier_id'}"/>
                     <filter string="Warranty Status" name="group_warranty" domain="[]" 

@@ -32,7 +32,7 @@ This module is designed to work alongside the standard Odoo 18 repair module.
 """,
     'author': 'Your Company',
     'website': 'https://www.yourcompany.com',
-    'depends': ['repair', 'stock', 'sale_management', 'account'],
+    'depends': ['repair'],
     'data': [
         'security/ir.model.access.csv',
         'views/repair_views.xml',

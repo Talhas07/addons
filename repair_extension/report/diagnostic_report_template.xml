@@ -148,18 +148,7 @@
                         <div class="col-12">
                             <table class="table table-sm table-borderless">
                                 <tr>
-                                    <td style="width: 200px;"><strong>Warranty Expiration:</strong></td>
-                                    <td>
-                                        <t t-if="o.guarantee_limit">
-                                            <span t-field="o.guarantee_limit"/>
-                                        </t>
-                                        <t t-else="">
-                                            <span>Not specified</span>
-                                        </t>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Warranty Status:</strong></td>
+                                    <td style="width: 200px;"><strong>Warranty Status:</strong></td>
                                     <td>
                                         <t t-if="o.warranty_status == 'valid'">
                                             <span style="color: green; font-weight: bold;">✓ VALID WARRANTY</span>
@@ -170,8 +159,11 @@
                                         <t t-elif="o.warranty_status == 'void'">
                                             <span style="color: orange; font-weight: bold;">⚠ WARRANTY VOID</span>
                                         </t>
+                                        <t t-elif="o.warranty_status == 'not_applicable'">
+                                            <span>Not Applicable</span>
+                                        </t>
                                         <t t-else="">
-                                            <span t-field="o.warranty_status"/>
+                                            <span>Unknown</span>
                                         </t>
                                     </td>
                                 </tr>
@@ -245,106 +237,27 @@
                     </div>
                     
                     <!-- Parts Required -->
-                    <div class="row mt-4" t-if="o.operations">
+                    <div class="row mt-4" t-if="o.move_ids">
                         <div class="col-12">
                             <h4 style="background-color: #f0f0f0; padding: 8px;">Parts Required</h4>
                             <table class="table table-sm">
                                 <thead>
                                     <tr>
-                                        <th>Type</th>
                                         <th>Product</th>
                                         <th>Description</th>
                                         <th class="text-end">Quantity</th>
-                                        <th class="text-end" t-if="o.invoice_method != 'none'">Unit Price</th>
-                                        <th class="text-end" t-if="o.invoice_method != 'none'">Subtotal</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr t-foreach="o.operations" t-as="line">
-                                        <td>
-                                            <t t-if="line.type == 'add'">Add</t>
-                                            <t t-if="line.type == 'remove'">Remove</t>
-                                        </td>
+                                    <tr t-foreach="o.move_ids" t-as="line">
                                         <td><span t-field="line.product_id.name"/></td>
                                         <td><span t-field="line.name"/></td>
                                         <td class="text-end">
                                             <span t-field="line.product_uom_qty"/>
                                             <span t-field="line.product_uom.name"/>
                                         </td>
-                                        <td class="text-end" t-if="o.invoice_method != 'none'">
-                                            <span t-field="line.price_unit"/>
-                                        </td>
-                                        <td class="text-end" t-if="o.invoice_method != 'none'">
-                                            <span t-field="line.price_subtotal" 
-                                                  t-options='{"widget": "monetary", "display_currency": o.pricelist_id.currency_id}'/>
-                                        </td>
                                     </tr>
                                 </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    
-                    <!-- Operations/Labor -->
-                    <div class="row mt-4" t-if="o.fees_lines">
-                        <div class="col-12">
-                            <h4 style="background-color: #f0f0f0; padding: 8px;">Labor / Operations</h4>
-                            <table class="table table-sm">
-                                <thead>
-                                    <tr>
-                                        <th>Description</th>
-                                        <th class="text-end">Quantity</th>
-                                        <th class="text-end" t-if="o.invoice_method != 'none'">Unit Price</th>
-                                        <th class="text-end" t-if="o.invoice_method != 'none'">Subtotal</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr t-foreach="o.fees_lines" t-as="fee">
-                                        <td><span t-field="fee.name"/></td>
-                                        <td class="text-end">
-                                            <span t-field="fee.product_uom_qty"/>
-                                            <span t-field="fee.product_uom.name"/>
-                                        </td>
-                                        <td class="text-end" t-if="o.invoice_method != 'none'">
-                                            <span t-field="fee.price_unit"/>
-                                        </td>
-                                        <td class="text-end" t-if="o.invoice_method != 'none'">
-                                            <span t-field="fee.price_subtotal" 
-                                                  t-options='{"widget": "monetary", "display_currency": o.pricelist_id.currency_id}'/>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    
-                    <!-- Cost Summary -->
-                    <div class="row mt-4" t-if="o.invoice_method != 'none'">
-                        <div class="col-8"></div>
-                        <div class="col-4">
-                            <table class="table table-sm">
-                                <tr>
-                                    <td><strong>Subtotal:</strong></td>
-                                    <td class="text-end">
-                                        <span t-field="o.amount_untaxed" 
-                                              t-options='{"widget": "monetary", "display_currency": o.pricelist_id.currency_id}'/>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Taxes:</strong></td>
-                                    <td class="text-end">
-                                        <span t-field="o.amount_tax" 
-                                              t-options='{"widget": "monetary", "display_currency": o.pricelist_id.currency_id}'/>
-                                    </td>
-                                </tr>
-                                <tr style="border-top: 2px solid #333;">
-                                    <td><strong>Total:</strong></td>
-                                    <td class="text-end">
-                                        <strong>
-                                            <span t-field="o.amount_total" 
-                                                  t-options='{"widget": "monetary", "display_currency": o.pricelist_id.currency_id}'/>
-                                        </strong>
-                                    </td>
-                                </tr>
                             </table>
                         </div>
                     </div>

@@ -22,10 +22,6 @@ class RepairOrder(models.Model):
         help="Serial number of the appliance for warranty tracking, supplier traceability, and historical records."
     )
     
-    # Alternative: Link to existing lot/serial for full traceability
-    # Note: The standard 'lot_id' field already exists for products with tracking
-    # This additional field allows manual serial entry for non-tracked products
-    
     # ===== 1.3 Supplier Identification per Appliance =====
     supplier_id = fields.Many2one(
         'res.partner',
@@ -78,12 +74,7 @@ class RepairOrder(models.Model):
         help="Technician who performed the diagnosis."
     )
     
-    is_under_warranty = fields.Boolean(
-        string='Under Warranty',
-        compute='_compute_is_under_warranty',
-        store=True,
-        help="Indicates if the appliance is currently under warranty."
-    )
+    # NOTE: Removed is_under_warranty as Odoo 18 already has 'under_warranty' field
     
     warranty_status = fields.Selection([
         ('unknown', 'Unknown'),
@@ -115,15 +106,6 @@ class RepairOrder(models.Model):
         string='Accessories Received',
         help="List of accessories received with the appliance."
     )
-    
-    @api.depends('guarantee_limit')
-    def _compute_is_under_warranty(self):
-        today = fields.Date.today()
-        for repair in self:
-            if repair.guarantee_limit:
-                repair.is_under_warranty = repair.guarantee_limit >= today
-            else:
-                repair.is_under_warranty = False
 
     def action_set_diagnosis_date(self):
         """Set the diagnosis date and technician when diagnosis is performed."""
