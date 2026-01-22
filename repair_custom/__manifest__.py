@@ -1,5 +1,5 @@
 {
-    'name': 'Repair Fees Restoration (Custom)',
+    'name': 'Repairs: Custom Fees Restoration',
     'version': '18.0.1.0.0',
     'category': 'Inventory/Inventory',
     'summary': 'Restores Repair Fees from v16 for v18',

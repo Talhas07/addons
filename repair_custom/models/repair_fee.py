@@ -17,7 +17,7 @@ class RepairFee(models.Model):
     company_id = fields.Many2one(
         related="repair_id.company_id", index=True, store=True)
     currency_id = fields.Many2one(
-        related="repair_id.currency_id")
+        related="repair_id.company_id.currency_id")
     name = fields.Text('Description', index=True, required=True)
     product_id = fields.Many2one(
         'product.product', 'Product', check_company=True,
@@ -37,6 +37,6 @@ class RepairFee(models.Model):
     @api.depends('price_unit', 'repair_id', 'product_uom_qty', 'product_id', 'tax_id')
     def _compute_price_total_and_subtotal(self):
         for fee in self:
-            taxes = fee.tax_id.compute_all(fee.price_unit, fee.repair_id.pricelist_id.currency_id, fee.product_uom_qty, fee.product_id, fee.repair_id.partner_id)
+            taxes = fee.tax_id.compute_all(fee.price_unit, fee.currency_id, fee.product_uom_qty, fee.product_id, fee.repair_id.partner_id)
             fee.price_subtotal = taxes['total_excluded']
             fee.price_total = taxes['total_included']
