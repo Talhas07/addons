@@ -6,6 +6,78 @@ from odoo.exceptions import UserError
 
 class RepairOrder(models.Model):
     _inherit = 'repair.order'
+    
+    # ===== Amount Fields (if not in Odoo 18) =====
+    # These provide the totals section like in Odoo 16
+    amount_untaxed = fields.Monetary(
+        string='Untaxed Amount',
+        compute='_compute_amounts',
+        store=True,
+        currency_field='currency_id',
+    )
+    amount_tax = fields.Monetary(
+        string='Taxes',
+        compute='_compute_amounts',
+        store=True,
+        currency_field='currency_id',
+    )
+    amount_total = fields.Monetary(
+        string='Total',
+        compute='_compute_amounts',
+        store=True,
+        currency_field='currency_id',
+    )
+    
+    # Currency field for monetary fields
+    currency_id = fields.Many2one(
+        'res.currency',
+        string='Currency',
+        compute='_compute_currency_id',
+        store=True,
+    )
+    
+    @api.depends('company_id')
+    def _compute_currency_id(self):
+        for repair in self:
+            repair.currency_id = repair.company_id.currency_id or self.env.company.currency_id
+    
+    @api.depends('move_ids', 'move_ids.state', 'move_ids.product_id', 'move_ids.product_uom_qty')
+    def _compute_amounts(self):
+        """Compute the total amounts for the repair order."""
+        for repair in self:
+            amount_untaxed = 0.0
+            amount_tax = 0.0
+            
+            # Try to get amounts from parts/operations if they exist
+            # This handles different Odoo 18 structures
+            
+            # Check if 'operations' field exists (Odoo 16 style)
+            if hasattr(repair, 'operations') and repair.operations:
+                for line in repair.operations:
+                    if hasattr(line, 'price_subtotal'):
+                        amount_untaxed += line.price_subtotal
+                    if hasattr(line, 'price_total') and hasattr(line, 'price_subtotal'):
+                        amount_tax += (line.price_total - line.price_subtotal)
+            
+            # Check if 'fees_lines' field exists (Odoo 16 style)
+            if hasattr(repair, 'fees_lines') and repair.fees_lines:
+                for line in repair.fees_lines:
+                    if hasattr(line, 'price_subtotal'):
+                        amount_untaxed += line.price_subtotal
+                    if hasattr(line, 'price_total') and hasattr(line, 'price_subtotal'):
+                        amount_tax += (line.price_total - line.price_subtotal)
+            
+            # Check if 'parts_lines' exists (possible Odoo 18 structure)
+            if hasattr(repair, 'parts_lines') and repair.parts_lines:
+                for line in repair.parts_lines:
+                    if hasattr(line, 'price_subtotal'):
+                        amount_untaxed += line.price_subtotal
+                    if hasattr(line, 'price_total') and hasattr(line, 'price_subtotal'):
+                        amount_tax += (line.price_total - line.price_subtotal)
+            
+            repair.amount_untaxed = amount_untaxed
+            repair.amount_tax = amount_tax
+            repair.amount_total = amount_untaxed + amount_tax
 
     # ===== 1.1 Customer Reference / Manual Job Card Number =====
     manual_job_card = fields.Char(
@@ -13,6 +85,27 @@ class RepairOrder(models.Model):
         copy=False,
         tracking=True,
         help="Internal manual job card reference for cross-referencing and internal tracking."
+    )
+    
+    customer_reference = fields.Char(
+        string='Customer Reference',
+        tracking=True,
+        help="Customer's own reference number for this repair."
+    )
+    
+    # ===== Repair Description (if not exists in Odoo 18) =====
+    repair_description = fields.Text(
+        string='Repair Description',
+        help="Detailed description of the repair work to be done."
+    )
+    
+    # ===== Product Barcode (related field) =====
+    product_barcode = fields.Char(
+        string='Product Barcode',
+        related='product_id.barcode',
+        readonly=True,
+        store=False,
+        help="Barcode of the product being repaired."
     )
     
     # ===== 1.2 Serial Number Capture =====
@@ -39,6 +132,14 @@ class RepairOrder(models.Model):
     purchase_date = fields.Date(
         string='Purchase Date',
         help="Date when the appliance was purchased from the supplier."
+    )
+    
+    # ===== Assigned Technician =====
+    technician_id = fields.Many2one(
+        'res.users',
+        string='Assigned Technician',
+        tracking=True,
+        help="Technician assigned to perform the repair."
     )
     
     # ===== 1.4 Diagnostic Technical Report Fields =====
@@ -73,8 +174,6 @@ class RepairOrder(models.Model):
         string='Diagnosed By',
         help="Technician who performed the diagnosis."
     )
-    
-    # NOTE: Removed is_under_warranty as Odoo 18 already has 'under_warranty' field
     
     warranty_status = fields.Selection([
         ('unknown', 'Unknown'),
