@@ -9,18 +9,15 @@
             <field name="inherit_id" ref="repair.view_repair_order_form"/>
             <field name="arch" type="xml">
                 
-                <!-- Add Manual Job Card Number after the name field -->
-                <xpath expr="//field[@name='name']/.." position="after">
-                    <div class="oe_title">
-                        <label for="manual_job_card" string="Manual Job Card #"/>
-                        <h3>
-                            <field name="manual_job_card" placeholder="Enter internal job card number..."/>
-                        </h3>
-                    </div>
+                <!-- Add Manual Job Card Number in the sheet after title -->
+                <xpath expr="//sheet" position="inside">
+                    <group name="manual_job_card_group" string="Internal Reference">
+                        <field name="manual_job_card" placeholder="Enter internal job card number..."/>
+                    </group>
                 </xpath>
                 
-                <!-- Add Appliance Details group after the first group -->
-                <xpath expr="//group[1]" position="after">
+                <!-- Add Appliance Details group -->
+                <xpath expr="//sheet" position="inside">
                     <group string="Appliance Details" name="appliance_details">
                         <group>
                             <field name="appliance_serial_number" placeholder="Enter serial number..."/>
@@ -37,16 +34,8 @@
                     </group>
                 </xpath>
                 
-                <!-- Add Diagnostic Report button to header -->
-                <xpath expr="//button[@name='print_repair_order']" position="after">
-                    <button name="action_print_diagnostic_report" 
-                            string="Print Diagnostic Report" 
-                            type="object" 
-                            data-hotkey="d"/>
-                </xpath>
-                
-                <!-- Add Diagnostic Report smart button -->
-                <xpath expr="//div[@name='button_box']" position="inside">
+                <!-- Add Diagnostic Report smart button to button_box if it exists -->
+                <xpath expr="//div[hasclass('oe_button_box')]" position="inside">
                     <button name="action_generate_diagnostic_report"
                             type="object"
                             class="oe_stat_button"
@@ -56,6 +45,13 @@
                             <span class="o_stat_text">Report</span>
                         </div>
                     </button>
+                </xpath>
+                
+                <!-- Add Print Diagnostic Report button to header -->
+                <xpath expr="//header" position="inside">
+                    <button name="action_print_diagnostic_report" 
+                            string="Print Diagnostic Report" 
+                            type="object"/>
                 </xpath>
                 
                 <!-- Add Diagnosis tab in notebook -->
@@ -107,22 +103,14 @@
                     <field name="manual_job_card" optional="show"/>
                 </xpath>
                 
-                <!-- Add Appliance Serial Number -->
+                <!-- Add Appliance Serial Number after product_id -->
                 <xpath expr="//field[@name='product_id']" position="after">
                     <field name="appliance_serial_number" optional="show"/>
                 </xpath>
                 
-                <!-- Add Supplier -->
+                <!-- Add Supplier after partner_id -->
                 <xpath expr="//field[@name='partner_id']" position="after">
                     <field name="supplier_id" optional="hide"/>
-                </xpath>
-                
-                <!-- Add Warranty Status after state -->
-                <xpath expr="//field[@name='state']" position="after">
-                    <field name="warranty_status" optional="hide" widget="badge" 
-                           decoration-success="warranty_status == 'valid'"
-                           decoration-danger="warranty_status == 'expired'"
-                           decoration-warning="warranty_status == 'void'"/>
                 </xpath>
                 
             </field>
@@ -135,40 +123,31 @@
             <field name="inherit_id" ref="repair.view_repair_order_form_filter"/>
             <field name="arch" type="xml">
                 
-                <!-- Add search fields -->
-                <xpath expr="//field[@name='product_id']" position="after">
+                <!-- Add search fields after the first field -->
+                <xpath expr="//field[1]" position="after">
                     <field name="manual_job_card" string="Manual Job Card"/>
                     <field name="appliance_serial_number" string="Serial Number"/>
                     <field name="supplier_id" string="Supplier"/>
                 </xpath>
                 
-                <!-- Add filters -->
-                <xpath expr="//separator[1]" position="after">
+                <!-- Add filter for diagnosis -->
+                <xpath expr="//filter[1]" position="before">
                     <filter string="Has Diagnosis" name="has_diagnosis" 
                             domain="[('diagnosis_date', '!=', False)]"/>
-                </xpath>
-                
-                <!-- Add group by options -->
-                <xpath expr="//group[@string='Group By']" position="inside">
-                    <filter string="Supplier" name="group_supplier" domain="[]" 
-                            context="{'group_by': 'supplier_id'}"/>
-                    <filter string="Warranty Status" name="group_warranty" domain="[]" 
-                            context="{'group_by': 'warranty_status'}"/>
-                    <filter string="Diagnosed By" name="group_diagnosed_by" domain="[]" 
-                            context="{'group_by': 'diagnosed_by'}"/>
+                    <separator/>
                 </xpath>
                 
             </field>
         </record>
         
-        <!-- Extend Kanban View -->
+        <!-- Extend Kanban View if it exists -->
         <record id="view_repair_kanban_inherit" model="ir.ui.view">
             <field name="name">repair.order.kanban.inherit.extension</field>
             <field name="model">repair.order</field>
             <field name="inherit_id" ref="repair.view_repair_kanban"/>
             <field name="arch" type="xml">
                 
-                <xpath expr="//field[@name='name']" position="after">
+                <xpath expr="//templates" position="before">
                     <field name="manual_job_card"/>
                     <field name="appliance_serial_number"/>
                     <field name="warranty_status"/>
