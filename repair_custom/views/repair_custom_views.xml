@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Extend Repair Order Form View -->
+    <record id="view_repair_order_form_inherit" model="ir.ui.view">
+        <field name="name">repair.order.form.inherit.custom</field>
+        <field name="model">repair.order</field>
+        <field name="inherit_id" ref="repair.view_repair_order_form"/>
+        <field name="arch" type="xml">
+            <!-- Add Description field after name -->
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="description" placeholder="Enter repair description..."/>
+            </xpath>
+
+            <!-- Add Invoice Method in header area -->
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="partner_invoice_id" 
+                       context="{'default_parent_id': partner_id}"
+                       domain="[('parent_id', '=', partner_id)]"/>
+                <field name="pricelist_id" groups="product.group_product_pricelist"/>
+                <field name="currency_id" invisible="1"/>
+            </xpath>
+
+            <!-- Add Invoice Method -->
+            <xpath expr="//field[@name='schedule_date']" position="after">
+                <field name="invoice_method"/>
+                <field name="guarantee_limit"/>
+            </xpath>
+
+            <!-- Add Parts (operations) notebook page -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Parts" name="parts">
+                    <field name="operations">
+                        <list string="Parts" editable="bottom">
+                            <field name="type"/>
+                            <field name="product_id" context="{'default_type': 'consu'}"/>
+                            <field name="name"/>
+                            <field name="lot_id" groups="stock.group_production_lot" optional="show"/>
+                            <field name="location_id" groups="stock.group_stock_multi_locations" optional="hide"/>
+                            <field name="location_dest_id" groups="stock.group_stock_multi_locations" optional="hide"/>
+                            <field name="product_uom_qty"/>
+                            <field name="product_uom" groups="uom.group_uom"/>
+                            <field name="price_unit"/>
+                            <field name="tax_id" widget="many2many_tags" optional="show"/>
+                            <field name="price_subtotal"/>
+                            <field name="state" column_invisible="True"/>
+                            <field name="invoiced" column_invisible="True"/>
+                            <field name="company_id" column_invisible="True"/>
+                            <field name="currency_id" column_invisible="True"/>
+                        </list>
+                    </field>
+                </page>
+                <page string="Operations (Fees)" name="fees">
+                    <field name="fees_lines">
+                        <list string="Operations" editable="bottom">
+                            <field name="product_id" context="{'default_type': 'service'}"/>
+                            <field name="name"/>
+                            <field name="product_uom_qty"/>
+                            <field name="product_uom" groups="uom.group_uom"/>
+                            <field name="price_unit"/>
+                            <field name="tax_id" widget="many2many_tags" optional="show"/>
+                            <field name="price_subtotal"/>
+                            <field name="invoiced" column_invisible="True"/>
+                            <field name="company_id" column_invisible="True"/>
+                            <field name="currency_id" column_invisible="True"/>
+                        </list>
+                    </field>
+                </page>
+                <page string="Notes" name="notes">
+                    <group>
+                        <group string="Internal Notes">
+                            <field name="internal_notes" nolabel="1" placeholder="Add internal notes here..."/>
+                        </group>
+                        <group string="Quotation Notes">
+                            <field name="quotation_notes" nolabel="1" placeholder="Add quotation notes here..."/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+
+            <!-- Add Amounts in footer area -->
+            <xpath expr="//sheet" position="inside">
+                <group class="oe_subtotal_footer oe_right" colspan="2" name="repair_total">
+                    <field name="amount_untaxed" widget='monetary' options="{'currency_field': 'currency_id'}"/>
+                    <field name="amount_tax" widget='monetary' options="{'currency_field': 'currency_id'}"/>
+                    <div class="oe_subtotal_footer_separator oe_inline o_td_label">
+                        <label for="amount_total"/>
+                    </div>
+                    <field name="amount_total" nolabel="1" class="oe_subtotal_footer_separator" widget='monetary' options="{'currency_field': 'currency_id'}"/>
+                </group>
+            </xpath>
+
+            <!-- Add Invoice button in header -->
+            <xpath expr="//button[@name='action_repair_confirm']" position="after">
+                <button name="action_repair_invoice_create" 
+                        string="Create Invoice"
+                        type="object"
+                        invisible="state not in ('confirmed', 'under_repair', 'done') or invoice_method == 'none' or invoiced"/>
+                <button name="action_created_invoice"
+                        string="View Invoice"
+                        type="object"
+                        invisible="not invoice_id"
+                        class="oe_link"/>
+            </xpath>
+
+            <!-- Add invoiced and invoice_id fields -->
+            <xpath expr="//field[@name='state']" position="after">
+                <field name="invoiced" invisible="1"/>
+                <field name="invoice_id" invisible="1"/>
+                <field name="repaired" invisible="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Extend Repair Order List View -->
+    <record id="view_repair_order_list_inherit" model="ir.ui.view">
+        <field name="name">repair.order.list.inherit.custom</field>
+        <field name="model">repair.order</field>
+        <field name="inherit_id" ref="repair.view_repair_order_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="description" optional="show"/>
+            </xpath>
+            <xpath expr="//field[@name='state']" position="after">
+                <field name="invoice_method" optional="hide"/>
+                <field name="amount_total" widget='monetary' optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Extend Repair Order Search View -->
+    <record id="view_repair_order_search_inherit" model="ir.ui.view">
+        <field name="name">repair.order.search.inherit.custom</field>
+        <field name="model">repair.order</field>
+        <field name="inherit_id" ref="repair.view_repair_order_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='filter_create_date']" position="after">
+                <separator/>
+                <filter string="To Invoice" name="to_invoice" domain="[('invoice_method', '!=', 'none'), ('invoiced', '=', False)]"/>
+                <filter string="Invoiced" name="invoiced" domain="[('invoiced', '=', True)]"/>
+            </xpath>
+            <xpath expr="//group" position="inside">
+                <filter string="Invoice Method" name="group_invoice_method" context="{'group_by': 'invoice_method'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Report Action -->
+    <record id="action_report_repair_order" model="ir.actions.report">
+        <field name="name">Repair Order</field>
+        <field name="model">repair.order</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">repair_custom.report_repair_order</field>
+        <field name="report_file">repair_custom.report_repair_order</field>
+        <field name="binding_model_id" ref="repair.model_repair_order"/>
+        <field name="binding_type">report</field>
+    </record>
+</odoo>
