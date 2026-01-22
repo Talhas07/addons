@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        
+        <!-- Generate Diagnostic Report Wizard Form -->
+        <record id="view_repair_generate_diagnostic_report_form" model="ir.ui.view">
+            <field name="name">repair.generate.diagnostic.report.form</field>
+            <field name="model">repair.generate.diagnostic.report</field>
+            <field name="arch" type="xml">
+                <form string="Generate Diagnostic Report">
+                    <group>
+                        <group string="Repair Order">
+                            <field name="repair_id"/>
+                        </group>
+                        <group string="Report Options">
+                            <field name="include_pricing"/>
+                            <field name="include_internal_notes"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Diagnosis Information">
+                            <field name="set_diagnosis_date"/>
+                            <field name="diagnosed_by"/>
+                        </group>
+                    </group>
+                    <footer>
+                        <button name="action_print_report" 
+                                string="Print Report" 
+                                type="object" 
+                                class="btn-primary"
+                                icon="fa-print"/>
+                        <button name="action_send_by_email" 
+                                string="Send by Email" 
+                                type="object" 
+                                class="btn-secondary"
+                                icon="fa-envelope"/>
+                        <button string="Cancel" class="btn-secondary" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+        
+        <!-- Action for Wizard -->
+        <record id="action_repair_generate_diagnostic_report" model="ir.actions.act_window">
+            <field name="name">Generate Diagnostic Report</field>
+            <field name="res_model">repair.generate.diagnostic.report</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+        
+    </data>
+</odoo>

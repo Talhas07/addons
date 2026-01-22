@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        
+        <!-- Email Template for Diagnostic Report -->
+        <record id="mail_template_diagnostic_report" model="mail.template">
+            <field name="name">Repair: Diagnostic Technical Report</field>
+            <field name="model_id" ref="repair.model_repair_order"/>
+            <field name="subject">Diagnostic Report - {{ object.name }}{% if object.manual_job_card %} (Job Card: {{ object.manual_job_card }}){% endif %}</field>
+            <field name="email_from">{{ (object.company_id.email or user.email) }}</field>
+            <field name="email_to">{{ object.partner_id.email }}</field>
+            <field name="body_html" type="html">
+<div style="margin: 0px; padding: 0px;">
+    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+        Dear <t t-out="object.partner_id.name or 'Customer'"/>,
+        <br/><br/>
+        Please find attached the Diagnostic Technical Report for your repair order.
+        <br/><br/>
+        <strong>Repair Order:</strong> <t t-out="object.name"/><br/>
+        <t t-if="object.manual_job_card">
+            <strong>Job Card Number:</strong> <t t-out="object.manual_job_card"/><br/>
+        </t>
+        <t t-if="object.product_id">
+            <strong>Product:</strong> <t t-out="object.product_id.display_name"/><br/>
+        </t>
+        <t t-if="object.appliance_serial_number">
+            <strong>Serial Number:</strong> <t t-out="object.appliance_serial_number"/><br/>
+        </t>
+        <t t-if="object.diagnosis_date">
+            <strong>Diagnosis Date:</strong> <t t-out="object.diagnosis_date" t-options='{"widget": "datetime"}'/><br/>
+        </t>
+        <br/>
+        <t t-if="object.repair_recommendations">
+            <strong>Recommendations:</strong><br/>
+            <t t-out="object.repair_recommendations"/>
+            <br/><br/>
+        </t>
+        If you have any questions regarding this report, please do not hesitate to contact us.
+        <br/><br/>
+        Best regards,<br/>
+        <t t-out="object.user_id.name or object.company_id.name"/>
+    </p>
+</div>
+            </field>
+            <field name="report_template_ids" eval="[(4, ref('repair_extension.action_report_diagnostic'))]"/>
+            <field name="lang">{{ object.partner_id.lang }}</field>
+            <field name="auto_delete" eval="True"/>
+        </record>
+        
+    </data>
+</odoo>
