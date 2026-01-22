@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="repair.group_technicians" model="res.groups">
+        <field name="name">Technicians</field>
+        <field name="category_id" ref="base.module_category_human_resources"/>
+    </record>
+</odoo>

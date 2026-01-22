@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_repair_order_form_inherit_fees" model="ir.ui.view">
+        <field name="name">repair.order.form.inheirt.fees</field>
+        <field name="model">repair.order</field>
+        <field name="inherit_id" ref="repair.view_repair_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='parts']" position="after">
+                <page string="Repair Fees" name="fees">
+                    <field name="fees_lines" context="{'default_company_id': company_id}">
+                        <tree string="Fees" editable="bottom">
+                            <field name="company_id" invisible="1" force_save="1"/>
+                            <field name="product_id" required="True" context="{'default_type': 'service'}"/>
+                            <field name='name' optional="show"/>
+                            <field name="product_uom_qty" string="Quantity"/>
+                            <field name="product_uom_category_id" invisible="1"/>
+                            <field name="product_uom" string="Unit of Measure" groups="uom.group_uom" optional="show"/>
+                            <field name="price_unit"/>
+                            <field name="tax_id" widget="many2many_tags" optional="show"/>
+                            <field name="price_subtotal" widget="monetary" groups="account.group_show_line_subtotals_tax_excluded"/>
+                            <field name="price_total" widget="monetary" groups="account.group_show_line_subtotals_tax_included"/>
+                            <field name="currency_id" column_invisible="True"/>
+                        </tree>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

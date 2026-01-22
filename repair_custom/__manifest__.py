@@ -1,34 +1,17 @@
-# Part of Odoo. See LICENSE file for full copyright and licensing details.
-
 {
-    'name': 'Repair Custom Extensions',
+    'name': 'Repair Fees Restoration (Custom)',
     'version': '18.0.1.0.0',
-    'sequence': 231,
     'category': 'Inventory/Inventory',
-    'summary': 'Custom repair extensions with legacy v16 compatibility',
+    'summary': 'Restores Repair Fees from v16 for v18',
     'description': """
-Custom Repair Module Extensions
-===============================
-
-This module extends the standard Odoo v18 Repair module with:
-- Legacy repair.line model for parts management
-- Legacy repair.fee model for service fees
-- Invoice method support (before/after repair)
-- Warranty expiration date
-- Pricelist and currency support
-- Quotation notes and internal notes
-
-This module is designed to preserve data migrated from Odoo v16.
-""",
-    'depends': ['repair', 'sale_management', 'account'],
+    Restores the 'Repair Fees' functionality that was present in Odoo v16 but removed in v18.
+    This allows access to migrated repair fee data.
+    """,
+    'depends': ['repair', 'account'],
     'data': [
         'security/ir.model.access.csv',
-        'views/repair_custom_views.xml',
-        'wizard/repair_make_invoice_views.xml',
-        'report/repair_templates_repair_order.xml',
-        'data/ir_sequence_data.xml',
+        'views/repair_views.xml',
     ],
     'installable': True,
-    'application': False,
     'license': 'LGPL-3',
 }
