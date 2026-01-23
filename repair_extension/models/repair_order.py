@@ -79,12 +79,12 @@ class RepairOrder(models.Model):
             repair.amount_tax = amount_tax
             repair.amount_total = amount_untaxed + amount_tax
 
-    # ===== 1.1 Customer Reference / Manual Job Card Number =====
-    manual_job_card = fields.Char(
-        string='Manual Job Card Number',
+    # ===== 1.1 Customer Reference / Job Card ID =====
+    job_card_id = fields.Integer(
+        string='Job Card ID',
         copy=False,
         tracking=True,
-        help="Internal manual job card reference for cross-referencing and internal tracking."
+        help="Internal job card ID for cross-referencing and internal tracking."
     )
     
     customer_reference = fields.Char(
@@ -93,18 +93,16 @@ class RepairOrder(models.Model):
         help="Customer's own reference number for this repair."
     )
     
-    # ===== Repair Description (if not exists in Odoo 18) =====
-    repair_description = fields.Text(
-        string='Repair Description',
+    # ===== Description =====
+    description = fields.Char(
+        string='Description',
         help="Detailed description of the repair work to be done."
     )
     
-    # ===== Product Barcode (related field) =====
-    product_barcode = fields.Char(
+    # ===== Product Barcode =====
+    product_bar_code = fields.Char(
         string='Product Barcode',
-        related='product_id.barcode',
-        readonly=True,
-        store=False,
+        store=True,
         help="Barcode of the product being repaired."
     )
     
@@ -135,7 +133,7 @@ class RepairOrder(models.Model):
     )
     
     # ===== Assigned Technician =====
-    technician_id = fields.Many2one(
+    assigned_technician_id = fields.Many2one(
         'res.users',
         string='Assigned Technician',
         tracking=True,
