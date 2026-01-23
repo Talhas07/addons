@@ -28,9 +28,9 @@
                                             <td><strong>Repair Order #:</strong></td>
                                             <td><span t-field="o.name"/></td>
                                         </tr>
-                                        <tr t-if="o.job_card_id">
-                                            <td><strong>Job Card ID:</strong></td>
-                                            <td><span t-field="o.job_card_id"/></td>
+                                        <tr t-if="o.manual_job_card">
+                                            <td><strong>Job Card #:</strong></td>
+                                            <td><span t-field="o.manual_job_card"/></td>
                                         </tr>
                                         <tr>
                                             <td><strong>Report Date:</strong></td>

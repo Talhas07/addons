@@ -13,20 +13,20 @@
                 <xpath expr="//sheet" position="inside">
                     <group string="Internal References" name="internal_references">
                         <group>
-                            <field name="job_card_id" placeholder="Enter job card ID..."/>
+                            <field name="manual_job_card" placeholder="Enter internal job card number..."/>
                             <field name="customer_reference" placeholder="Customer's reference..."/>
                         </group>
                         <group>
-                            <field name="assigned_technician_id" options="{'no_create': True}"/>
-                            <field name="product_bar_code"/>
+                            <field name="technician_id" options="{'no_create': True}"/>
+                            <field name="product_barcode" readonly="1"/>
                         </group>
                     </group>
                 </xpath>
                 
-                <!-- Add Description -->
+                <!-- Add Repair Description -->
                 <xpath expr="//sheet" position="inside">
-                    <group string="Description" name="description_group">
-                        <field name="description" nolabel="1" placeholder="Describe the repair work to be done..."/>
+                    <group string="Repair Description" name="repair_description_group">
+                        <field name="repair_description" nolabel="1" placeholder="Describe the repair work to be done..."/>
                     </group>
                 </xpath>
                 
@@ -125,23 +125,23 @@
             <field name="inherit_id" ref="repair.view_repair_order_tree"/>
             <field name="arch" type="xml">
                 
-                <!-- Add Job Card ID after name -->
+                <!-- Add Manual Job Card after name -->
                 <xpath expr="//field[@name='name']" position="after">
-                    <field name="job_card_id" optional="show"/>
+                    <field name="manual_job_card" optional="show"/>
                     <field name="customer_reference" optional="hide"/>
                 </xpath>
                 
                 <!-- Add Appliance Serial Number and Barcode after product_id -->
                 <xpath expr="//field[@name='product_id']" position="after">
                     <field name="appliance_serial_number" optional="show"/>
-                    <field name="product_bar_code" optional="hide"/>
-                    <field name="description" optional="hide"/>
+                    <field name="product_barcode" optional="hide"/>
+                    <field name="repair_description" optional="hide"/>
                 </xpath>
                 
                 <!-- Add Supplier and Technician after partner_id -->
                 <xpath expr="//field[@name='partner_id']" position="after">
                     <field name="supplier_id" optional="hide"/>
-                    <field name="assigned_technician_id" optional="show"/>
+                    <field name="technician_id" optional="show"/>
                 </xpath>
                 
             </field>
@@ -156,12 +156,12 @@
                 
                 <!-- Add search fields after the first field -->
                 <xpath expr="//field[1]" position="after">
-                    <field name="job_card_id" string="Job Card ID"/>
+                    <field name="manual_job_card" string="Manual Job Card"/>
                     <field name="customer_reference" string="Customer Reference"/>
                     <field name="appliance_serial_number" string="Serial Number"/>
-                    <field name="product_bar_code" string="Barcode"/>
+                    <field name="product_barcode" string="Barcode"/>
                     <field name="supplier_id" string="Supplier"/>
-                    <field name="assigned_technician_id" string="Technician"/>
+                    <field name="technician_id" string="Technician"/>
                 </xpath>
                 
                 <!-- Add filter for diagnosis -->
@@ -169,7 +169,7 @@
                     <filter string="Has Diagnosis" name="has_diagnosis" 
                             domain="[('diagnosis_date', '!=', False)]"/>
                     <filter string="My Repairs" name="my_repairs" 
-                            domain="[('assigned_technician_id', '=', uid)]"/>
+                            domain="[('technician_id', '=', uid)]"/>
                     <separator/>
                 </xpath>
                 
@@ -184,11 +184,11 @@
             <field name="arch" type="xml">
                 
                 <xpath expr="//templates" position="before">
-                    <field name="job_card_id"/>
+                    <field name="manual_job_card"/>
                     <field name="customer_reference"/>
                     <field name="appliance_serial_number"/>
                     <field name="warranty_status"/>
-                    <field name="assigned_technician_id"/>
+                    <field name="technician_id"/>
                 </xpath>
                 
             </field>

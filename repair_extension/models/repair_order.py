@@ -9,23 +9,23 @@ class RepairOrder(models.Model):
     
     # ===== Amount Fields (if not in Odoo 18) =====
     # These provide the totals section like in Odoo 16
-    amount_untaxed = fields.Monetary(
+    amount_untaxed = fields.Float(
         string='Untaxed Amount',
         compute='_compute_amounts',
         store=True,
-        currency_field='currency_id',
+        digits='Product Price',
     )
-    amount_tax = fields.Monetary(
+    amount_tax = fields.Float(
         string='Taxes',
         compute='_compute_amounts',
         store=True,
-        currency_field='currency_id',
+        digits='Product Price',
     )
-    amount_total = fields.Monetary(
+    amount_total = fields.Float(
         string='Total',
         compute='_compute_amounts',
         store=True,
-        currency_field='currency_id',
+        digits='Product Price',
     )
     
     # Currency field for monetary fields
@@ -79,12 +79,12 @@ class RepairOrder(models.Model):
             repair.amount_tax = amount_tax
             repair.amount_total = amount_untaxed + amount_tax
 
-    # ===== 1.1 Customer Reference / Job Card ID =====
-    job_card_id = fields.Integer(
-        string='Job Card ID',
+    # ===== 1.1 Customer Reference / Manual Job Card Number =====
+    manual_job_card = fields.Char(
+        string='Manual Job Card Number',
         copy=False,
         tracking=True,
-        help="Internal job card ID for cross-referencing and internal tracking."
+        help="Internal manual job card reference for cross-referencing and internal tracking."
     )
     
     customer_reference = fields.Char(
@@ -93,16 +93,18 @@ class RepairOrder(models.Model):
         help="Customer's own reference number for this repair."
     )
     
-    # ===== Description =====
-    description = fields.Char(
-        string='Description',
+    # ===== Repair Description (if not exists in Odoo 18) =====
+    repair_description = fields.Text(
+        string='Repair Description',
         help="Detailed description of the repair work to be done."
     )
     
-    # ===== Product Barcode =====
-    product_bar_code = fields.Char(
+    # ===== Product Barcode (related field) =====
+    product_barcode = fields.Char(
         string='Product Barcode',
-        store=True,
+        related='product_id.barcode',
+        readonly=True,
+        store=False,
         help="Barcode of the product being repaired."
     )
     
@@ -133,7 +135,7 @@ class RepairOrder(models.Model):
     )
     
     # ===== Assigned Technician =====
-    assigned_technician_id = fields.Many2one(
+    technician_id = fields.Many2one(
         'res.users',
         string='Assigned Technician',
         tracking=True,
