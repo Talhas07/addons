@@ -19,11 +19,18 @@ class Repair(models.Model):
         'account.move', 'Diagnostic Invoice',
         copy=False, readonly=True, tracking=True,
         domain=[('move_type', '=', 'out_invoice')])
+    invoiced = fields.Boolean(
+        string='Invoiced',
+        copy=False,
+        default=False,
+        help="Indicates whether a repair invoice has been created")
+
 
     def action_repair_invoice_create_2(self):
         for repair in self:
             _logger.info("A action_repair_invoice_create 1")
-            repair.invoice_method = "after_repair"
+            # Note: invoice_method field may not exist in Odoo 18
+            # repair.invoice_method = "after_repair"
             _logger.info("B action_repair_invoice_create 2")
             #repair._create_invoices()   
             group=False
