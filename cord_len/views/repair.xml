@@ -24,8 +24,6 @@
           <field name="product_bar_code" string="Product Barcode" />
           <field name="customer_reference" />
           <field name="supplier_id" />
-        </xpath>
-        <xpath expr="//field[@name='invoice_method']" position="after">
           <field name="invoiced" invisible="1" />     
           <field name="diagnostic_invoice_id" invisible="1" />  
         </xpath>
