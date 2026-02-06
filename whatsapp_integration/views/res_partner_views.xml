@@ -25,7 +25,7 @@
                         class="btn-sm btn-link mb4 fa fa-whatsapp"
                         aria-label="Send WhatsApp Message"
                         title="Send WhatsApp Message"
-                        attrs="{'invisible':[('mobile', '=', False)]}"
+                        invisible="mobile == False"
                         context="{'field_name': 'mobile', 'force_mobile': True, 'force_country': True}"
                         />
                     </div>
@@ -40,7 +40,9 @@
         <field name="priority">22</field>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='email']" position="replace">
-                <field name="email" widget="email" context="{'gravatar_image': True}" attrs="{'required': [('user_ids','!=', [])]}"/>
+                <field name="email" widget="email"
+                    context="{'gravatar_image': True}"
+                    required="user_ids != []"/>
             </xpath>
             <xpath expr="//field[@name='mobile']" position="replace">
                 <field name="mobile" widget="phone" required="context.get('force_mobile', False)" />

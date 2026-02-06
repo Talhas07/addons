@@ -9,10 +9,10 @@
                 <xpath expr="//field[@name='link_field_id']" position="after">
                     <field name="whatsapp_template_id"
                         context="{'default_model_id': model_id}"
-                        attrs="{'invisible': [('state', '!=', 'whatsapp')],
-                                'required': [('state', '=', 'whatsapp')]}"/>
+                        invisible="state != 'whatsapp'"
+                        required="state == 'whatsapp'"/>
                     <field name="whatsapp_mass_keep_log"
-                        attrs="{'invisible': [('state', '!=', 'whatsapp')]}"/>
+                        invisible="state != 'whatsapp'"/>
                 </xpath>
             </field>
         </record>

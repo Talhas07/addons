@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'WhatsApp Odoo Integration',
-    'version': '18.0.1.2.2',
+    'version': '2.3',
     'category': 'Tools',
     'author': 'InTechual Solutions',
     'license': 'OPL-1',
@@ -12,7 +12,7 @@ This module can be used to send messages to WhatsApp
 Send Messages via WhatsApp
 Core module for WhatsApp Odoo Integration
 """,
-    'depends': ['base', 'base_setup', 'web', 'mail'],
+    'depends': ['base', 'base_setup', 'web', 'mail', 'contacts'],
     'data': [
         'data/whatsapp_cron.xml',
         'data/wp_sequence.xml',
@@ -29,11 +29,11 @@ Core module for WhatsApp Odoo Integration
         'web.assets_backend': [
             'whatsapp_integration/static/src/js/views/many2many_tags_mobile.js',
             'whatsapp_integration/static/src/js/views/many2many_tags_mobile.xml',
-            'whatsapp_integration/static/src/js/refresh_qr_code.js',
+            'whatsapp_integration/static/src/**/web/**/*',
         ],
     },
     'external_dependencies': {'python': ['phonenumbers', 'selenium']},
-    'images': ['static/description/main_screenshot.png'],
+    'images': ['static/description/main_screenshot.jpg'],
     'installable': True,
     'application': True,
     'sequence': 1,

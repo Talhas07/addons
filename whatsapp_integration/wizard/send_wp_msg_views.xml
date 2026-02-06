@@ -9,8 +9,15 @@
                 <sheet>
                     <group>
                         <field name="sending_mode"/>
-                        <field name="partner_ids" widget="many2many_tags_mobile" placeholder="Add contacts" context="{'force_mobile':True, 'force_country':True, 'form_view_ref': 'base.view_partner_simple_form'}" attrs="{'invisible': [('sending_mode', '!=', 'numbers')], 'required': [('sending_mode', '=', 'numbers')]}"/>
-                        <field name="group_name" attrs="{'invisible': [('sending_mode', '!=', 'group')], 'required': [('sending_mode', '=', 'group')]}"/>
+                        <field name="partner_ids"
+                            widget="many2many_tags_mobile"
+                            placeholder="Add contacts" context="{'force_mobile':True, 'force_country':True, 'form_view_ref': 'base.view_partner_simple_form'}"
+                            invisible="sending_mode != 'numbers' or not partner_ids"
+                            required="sending_mode == 'numbers'"/>
+                        <field name="group_name"
+                            invisible="sending_mode != 'group'"
+                            required="sending_mode == 'group'"/>
+                        <field name="number" invisible="context.get('active_model', '') != 'crm.lead'"/>
                         <field name="message" style="height='400px';"/>
                     </group>
                     <group col="4">
@@ -34,31 +41,48 @@
         <field name="model">whatsapp.scan.qr</field>
         <field name="arch" type="xml">
             <form string="Scan WhatsApp QR Code" class="qr_code_form">
-                <h3 class='text-warning'><i class="fa fa-exclamation-triangle" title="Warning" role="img" aria-label="Warning"/>You are not logged in to WhatsApp, Please Scan QR code and Login</h3>
-                <h3 class='text-info'>Close the window after few seconds, Once you get logged in signal from your mobile device.</h3>
-                <br/>
-                <br/>
+                <h3 class='text-warning'>
+                    <i class="fa fa-exclamation-triangle" title="Warning" role="img" aria-label="Warning"/>
+                    You are not logged in to WhatsApp, Please Scan QR code and Login
+                </h3>
+                <h3 class='text-info'>
+                    Close the window after few seconds, Once you get logged in signal from your mobile device.
+                </h3>
+                <br/><br/>
                 <style>
-                    .qr_img {
+                    .qr_wrapper {
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        margin: 20px 0;
+                    }
+                    .qr_container {
                         position: relative;
-                        top: 0;
-                        left: 300px;
-                        right: 384px;
-                        text-align
+                        display: inline-block;
+                    }
+                    .qr_img {
+                        display: block;
+                        max-width: 100%;
+                        height: auto;
                     }
                     .qr_icon {
                         position: absolute;
-                        top: 210px;
-                        left: 410px;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
                         height: 64px;
                         width: 64px;
                     }
                 </style>
-                <img src="/whatsapp_integration/static/img/qr.png" alt="img" class="qr_img"/>
-                <img src="/whatsapp_integration/static/img/wp.png" alt="img" class="qr_icon"/>
+                <div class="qr_wrapper">
+                    <div class="qr_container">
+                        <img src="/whatsapp_integration/static/img/qr.png" alt="QR Code" class="qr_img"/>
+                        <img src="/whatsapp_integration/static/img/wp.png" alt="WhatsApp Icon" class="qr_icon"/>
+                    </div>
+                </div>
                 <footer>
                     <button string="Close and Send" type="object" class="oe_highlight send_btn" name="action_send_msg"/>
-                    <button string="Close" class="oe_link close_btn" special="cancel" />
+                    <button string="Close" class="oe_link close_btn" special="cancel"/>
                 </footer>
             </form>
         </field>

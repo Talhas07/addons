@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import base64
-import datetime
 import logging
 import os
 import time
 import traceback
-import subprocess
 
-from lxml import etree
+from markupsafe import Markup
 
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
@@ -49,13 +47,12 @@ except ImportError:
     )
 driver = {}
 profile = {}
-wait={}
-wait5={}
-wait100={}
+wait = {}
+wait4 = {}
+wait5 = {}
 is_session_open = {}
 options = {}
 msg_sent = False
-
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -81,17 +78,18 @@ class SendWAMessage(models.TransientModel):
     unique_user = fields.Char(default=_default_unique_user)
     sending_mode = fields.Selection([('numbers', 'Numbers'), ('group', 'Group')], string='Sending Mode', default='numbers', help='Select mode for norma chat of WhatsApp Group')
     group_name = fields.Char(string='Group Name', help='Give extact name you want to send the message to WhatsApp group')
-
+    number = fields.Char()
     res_model = fields.Char('Document Model Name')
     res_id = fields.Integer('Document ID')
     res_ids = fields.Char('Document IDs')
     template_id = fields.Many2one('whatsapp.template', string='Use Template', domain="[('model', '=', res_model)]")
 
-    @api.model
-    def create(self, vals):
+    @api.model_create_multi
+    def create(self, vals_list):
         pos_wp_login = self.env.context.get('pos_wp_login')
-        if not pos_wp_login:
-            vals['name'] = self.env['ir.sequence'].next_by_code('whatsapp.msg.sequence') or _('New')
+        for vals in vals_list:
+            if not pos_wp_login:
+                vals['name'] = self.env['ir.sequence'].next_by_code('whatsapp.msg.sequence') or _('New')
         context = self.env.context.copy()
         if context.get('active_model') == 'pos.order' and context.get('active_id'):
             try:
@@ -100,9 +98,7 @@ class SendWAMessage(models.TransientModel):
             except:
                 pass
             self = self.with_context(context)
-        res = super(SendWAMessage, self).create(vals)
-        if vals.get('partner_ids'):
-            res.partner_ids = vals.get('partner_ids')
+        res = super(SendWAMessage, self).create(vals_list)
         return res
 
     @api.depends('res_model', 'res_id', 'template_id')
@@ -164,56 +160,42 @@ class SendWAMessage(models.TransientModel):
         active_model = self.env.context.get('active_model')
         Attachment = self.env['ir.attachment']
         receipt_data = self.env.context.get('receipt_data')
+        rec = None
         if not active_model:
             return result
-        res_id = self.env.context.get('active_id') or self.env.context.get('res_id')
-        result['res_model'] = result.get('res_model') or self.env.context.get('active_model')
-        if not result.get('res_ids'):
-            if not result.get('res_id') and self.env.context.get('active_ids') and len(self.env.context.get('active_ids')) > 1:
-                result['res_ids'] = repr(self.env.context.get('active_ids'))
-        if not result.get('res_id'):
-            if not result.get('res_ids') and self.env.context.get('active_id'):
-                result['res_id'] = self.env.context.get('active_id')
+        res_id = self.env.context.get('active_id')
+        if active_model == 'crm.lead':
+            rec = self.env[active_model].browse(res_id)
+            if rec.partner_id:
+                result['partner_ids'] = [(6, 0, rec.partner_id.ids)]
+            else:
+                result['number'] = rec.mobile or rec.phone
+            return result
         if active_model == 'pos.order':
-            rec = self.env[active_model].search([('pos_reference', '=', res_id)], order='id desc', limit=1)
-            if not rec:
-                return result
-            res_id = rec.id
-            res_name = rec.pos_reference and rec.pos_reference.replace('/', '_').replace(' ', '_')
+            order_name = self.env.context.get('res_id')
+            res_name = order_name and order_name.replace('/', '_').replace(' ', '_')
             if receipt_data:
                 try:
-                    specific_paperformat_args = {
-                        'data-report-margin-top': 10,
-                        'data-report-margin-left': 40,
-                    }
-                    data1 = '<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>'
-                    receipt_data = data1 + receipt_data
-                    pos_receipt_paperformat_id = self.env.ref('whatsapp_pos_integration.is_pos_receipt_paperformat')
-                    pdf = self.env['ir.actions.report'].with_context(pos_receipt_paperformat_id=pos_receipt_paperformat_id)._run_wkhtmltopdf(
-                        [receipt_data],
-                        landscape=True,
-                        specific_paperformat_args=specific_paperformat_args
-                    )
-                    res = base64.b64encode(pdf)
-                    filename = res_name + '.pdf'
+                    filename = res_name + '.jpeg'
                     attachment_data = {
                         'name': filename,
-                        'datas': res,
+                        'datas': receipt_data,
                         'type': 'binary',
                         'store_fname': filename,
                         'res_model': active_model,
                         'res_id': res_id,
-                        'mimetype': 'application/pdf'
+                        'mimetype': 'image/jpeg'
                     }
                     attachment_id = Attachment.create(attachment_data).id
                     result['attachment_ids'] = [(6, 0, [attachment_id])]
-                except Exception:
+                except Exception as aex:
                     traceback.print_exc()
 
                 return result
         else:
             rec = self.env[active_model].browse(res_id)
-            res_name = 'Invoice_' + rec.name.replace('/', '_') if active_model == 'account.move' else rec.name.replace('/', '_')
+            inv_name = rec.name or 'Draft'
+            res_name = 'Invoice_' + inv_name.replace('/', '_') if active_model == 'account.move' else inv_name.replace('/', '_')
         msg = result.get('message', '')
         result['message'] = msg
 
@@ -228,7 +210,7 @@ class SendWAMessage(models.TransientModel):
             partners = records._get_default_whatsapp_recipients()
             phone_numbers = []
             no_phone_partners = []
-            if active_model not in ['res.partner', 'hr.employee']:
+            if active_model not in ['res.partner', 'hr.employee', 'crm.lead']:
                 is_attachment_exists = Attachment.search([('res_id', '=', res_id), ('name', 'like', res_name + '%'), ('res_model', '=', active_model)], limit=1)
                 if not is_attachment_exists:
                     attachments = []
@@ -253,7 +235,7 @@ class SendWAMessage(models.TransientModel):
                             return result
 
                     if active_model != 'pos.order':
-                        report = template.report_template
+                        report = template.report_template_ids and template.report_template_ids[0]
                         report_service = report.report_name
 
                     if report.report_type not in ['qweb-html', 'qweb-pdf']:
@@ -298,31 +280,25 @@ class SendWAMessage(models.TransientModel):
         global driver
         global wait
         global wait5
+        global wait4
         global msg_sent
         if not driver.get(self.unique_user):
             return {'result': False, 'msg_sent': False}
         if not self.is_wp_loaded():
             try:
-                elements = driver.get(self.unique_user).find_elements(by=By.CLASS_NAME, value='_20c87')
-                if not elements:
+                # elements = driver.get(self.unique_user).find_elements(by=By.CLASS_NAME, value='_20c87')
+                # if not elements:
+                if True:
                     try:
-                        landing_wrapper_xpath = "//div[contains(@class, 'landing-wrapper')]"
-                        landing_wrapper = wait5.get(self.unique_user).until(EC.presence_of_element_located((
-                            By.XPATH, landing_wrapper_xpath)))
                         try:
-                            spin_class = driver.get(self.unique_user).find_elements(by=By.CLASS_NAME, value='b9fczbqn')
-                            if spin_class:
-                                return {"isLoggedIn": False}
+                            refresh_class = driver.get(self.unique_user).find_element(by=By.CSS_SELECTOR, value="span[data-icon='refresh-large']")
+                            refresh_class.click()
+                            # elements = driver.get(self.unique_user).find_elements(by=By.CLASS_NAME, value='_2znac')
+                            # for e in elements:
+                                # e.click()
                         except:
                             pass
-
-                        try:
-                            elements = driver.get(self.unique_user).find_elements(by=By.CLASS_NAME, value='_2znac')
-                            for e in elements:
-                                e.click()
-                        except:
-                            pass
-                        qr_code_xpath = "//canvas[contains(@aria-label, 'Scan me!')]"
+                        qr_code_xpath = "//canvas[@role='img']"
                         qr_code = wait5.get(self.unique_user).until(EC.presence_of_element_located((
                             By.XPATH, qr_code_xpath)))
                         base64_image = driver.get(self.unique_user).execute_script("return document.querySelector('canvas').toDataURL('image/png');")
@@ -351,25 +327,38 @@ class SendWAMessage(models.TransientModel):
             if count >= 120:
                 return {'result': False, 'msg_sent': False}
 
+        try:
+            continue_button_xpath = "//button[contains(@class, 'x1k3x3db')]"
+            continue_button = wait4.get(self.unique_user).until(EC.presence_of_element_located((
+                By.XPATH, continue_button_xpath)))
+            if continue_button:
+                continue_button.click()
+        except:
+            pass
+
         if group_name:
             try:
-                time.sleep(1)
-                inp_elements = driver.get(self.unique_user).find_elements(by=By.CSS_SELECTOR, value="p.selectable-text.copyable-text")
-                inp_element = inp_elements and inp_elements[0]
+                time.sleep(3)
+                inp_element = None
+                try:
+                    inp_elements = driver.get(self.unique_user).find_element(by=By.CSS_SELECTOR, value="div[data-lexical-editor='true']")
+                    inp_element = inp_elements and inp_elements[1]
+                except:
+                    pass
                 if inp_element:
-                    inp_element.clear()
                     inp_element.send_keys(group_name)
                     time.sleep(2)
                 try:
-                    selected_contact = driver.get(self.unique_user).find_elements(by=By.XPATH, value="//span[@title='"+group_name+"']")
-                    selected_contact = selected_contact and selected_contact[0]
+                    selected_contact = driver.get(self.unique_user).find_element(by=By.XPATH, value="//span[@title='"+group_name+"']")
+                    time.sleep(3)
                     selected_contact.click()
                 except (NoSuchElementException, Exception) as e:
                     return {'group_not_available': True}
-                enter_elements = driver.get(self.unique_user).find_elements(by=By.CSS_SELECTOR, value="p.selectable-text.copyable-text")
-                enter_element = enter_elements and enter_elements[1]
-                if enter_element:
-                    msg = msg.replace('PARTNER', 'Group Members')
+                try:
+                    inp_elements = driver.get(self.unique_user).find_element(by=By.CSS_SELECTOR, value="div[data-lexical-editor='true']")
+                    enter_element = inp_elements and inp_elements[1]
+                    if enter_element:
+                        msg = msg.replace('PARTNER', 'Group Members')
                     if "\n" in msg:
                         for ch in msg:
                             if ch == "\n":
@@ -380,25 +369,43 @@ class SendWAMessage(models.TransientModel):
                     else:
                         enter_element.send_keys(msg + Keys.ENTER)
                     time.sleep(1)
-
+                except Exception as ge:
+                    pass
+                try:
+                    enter_element = driver.get(self.unique_user).find_element(by=By.CSS_SELECTOR, value="span[data-icon='wds-ic-send-filled']")
+                    if enter_element:
+                        enter_element.click()
+                        time.sleep(2)
+                except:
+                    pass
                 for attachment in self.attachment_ids:
                     try:
                         time.sleep(1)
-                        driver.get(self.unique_user).find_element(by=By.CSS_SELECTOR, value="span[data-icon='clip']").click()
+                        driver.get(self.unique_user).find_element(
+                            by=By.XPATH,
+                            value="//span[@data-icon='clip' or @data-icon='plus' or @data-icon='plus-rounded']"
+                        ).click()
                         time.sleep(1)
                         with open("/tmp/" + attachment.name, 'wb') as tmp:
                             tmp.write(base64.decodebytes(attachment.datas))
-                        driver.get(self.unique_user).find_element(by=By.CSS_SELECTOR, value="input[type='file']").send_keys(tmp.name)
+                        if attachment.mimetype and 'image' in attachment.mimetype or 'video' in attachment.mimetype:
+                            driver.get(self.unique_user).find_elements(by=By.CSS_SELECTOR, value="input[type='file']")[1].send_keys(tmp.name)
+                        else:
+                            driver.get(self.unique_user).find_element(by=By.CSS_SELECTOR, value="input[type='file']").send_keys(tmp.name)
 
-                        wait_upload_xpath = "//span[@data-icon='x-alt']"
+                        wait_upload_xpath = "//span[@data-icon='x-alt'] | //span[@data-icon='plus']"
                         wait_upload = wait.get(self.unique_user).until(EC.presence_of_element_located((
                             By.XPATH, wait_upload_xpath)))
                         time.sleep(1)
-                        driver.get(self.unique_user).find_element(by=By.CSS_SELECTOR, value="span[data-icon='send']").click()
+                        driver.get(self.unique_user).find_element(
+                            by=By.XPATH,
+                            value="//span[@data-icon='send' or @data-icon='wds-ic-send-filled']"
+                        ).click()
                     except:
                         pass
                 return {'result': True, 'msg_sent': True}
             except Exception as ex:
+                _logger.info("Error sending WhatsApp Group Message: %s" % ex)
                 msg_sent = False
                 return {'result': False, 'msg_sent': False}
         if not msg or not number:
@@ -407,58 +414,88 @@ class SendWAMessage(models.TransientModel):
             sender_el = driver.get(self.unique_user).find_element(by=By.ID, value='sender')
             if not sender_el:
                 try:
-                    script = 'var newEl = document.createElement("div");newEl.innerHTML = "<a href=\'#\' id=\'sender\' class=\'executor\'> </a>";var ref = document.querySelector("div#pane-side");ref.parentNode.insertBefore(newEl, ref.previousSibling);'
+                    script = 'var newEl = document.createElement("div");newEl.innerHTML = "<a href=\'#\' id=\'sender\' class=\'executor\'> </a>";var ref = document.querySelector("div#side");ref.prepend(newEl);'
                     driver.get(self.unique_user).execute_script(script)
                 except Exception as sc:
                     pass
         except NoSuchElementException as e:
             msg_sent = False
             try:
-                script = 'var newEl = document.createElement("div");newEl.innerHTML = "<a href=\'#\' id=\'sender\' class=\'executor\'> </a>";var ref = document.querySelector("div#pane-side");ref.parentNode.insertBefore(newEl, ref.previousSibling);'
+                script = 'var newEl = document.createElement("div");newEl.innerHTML = "<a href=\'#\' id=\'sender\' class=\'executor\'> </a>";var ref = document.querySelector("div#side");ref.prepend(newEl);'
                 driver.get(self.unique_user).execute_script(script)
             except Exception as sc:
                 pass
         try:
-            time.sleep(1)
+            time.sleep(2)
             try:
                 number = ''.join([n for n in number if n.isdigit()])
             except:
                 pass
             driver.get(self.unique_user).execute_script("var idx = document.getElementsByClassName('executor').length -1; document.getElementsByClassName('executor')[idx].setAttribute(arguments[0], arguments[1]);", "href", "https://api.whatsapp.com/send?phone=" + number + "&text=" + msg.replace('\n', '%0A'))
-            time.sleep(1)
+            time.sleep(2)
             driver.get(self.unique_user).find_element(by=By.ID, value='sender').click()
-            time.sleep(1)
+            time.sleep(2)
             try:
-                inp_elements = driver.get(self.unique_user).find_elements(by=By.CSS_SELECTOR, value="p.selectable-text.copyable-text")
-                inp_element = inp_elements and inp_elements[1]
-                if inp_element:
-                    inp_element.send_keys(Keys.ENTER)
-                    time.sleep(2)
-            except:
-                pass
-            try:
-                inp_element = driver.get(self.unique_user).find_elements(by=By.CSS_SELECTOR, value="span[data-icon='send']")
+                inp_element = driver.get(self.unique_user).find_element(by=By.CSS_SELECTOR, value="span[data-icon='wds-ic-send-filled']")
                 if inp_element:
                     inp_element.click()
                     time.sleep(2)
-            except:
+            except Exception as bex:
+                pass
+            try:
+                enter_count = 0
+                while True:
+                    if enter_count == 50:
+                        break
+
+                    time.sleep(1)
+                    enter_count += 1
+
+                    try:
+                        inp_elements = driver.get(self.unique_user).find_elements(
+                            By.CSS_SELECTOR,
+                            "div[data-lexical-editor='true']"
+                        )
+                        if len(inp_elements) > 1:
+                            inp_element = inp_elements[1]
+                            inp_element.send_keys(Keys.ENTER)
+                            time.sleep(2)
+                            break
+                    except:
+                        pass
+            except Exception as ex:
                 pass
 
             for attachment in self.attachment_ids:
                 try:
                     time.sleep(1)
-                    driver.get(self.unique_user).find_element(by=By.CSS_SELECTOR, value="span[data-icon='clip']").click()
+                    driver_user = driver.get(self.unique_user)
+                    add_icon = driver_user.find_element(
+                        by=By.XPATH,
+                        value="//span[@data-icon='clip' or @data-icon='plus' or @data-icon='plus-rounded']"
+                    )
+                    add_icon.click()
                     time.sleep(1)
-                    with open("/tmp/" + attachment.name, 'wb') as tmp:
+                    tmp_path = f"/tmp/{attachment.name}"
+                    with open(tmp_path, "wb") as tmp:
                         tmp.write(base64.decodebytes(attachment.datas))
-                    driver.get(self.unique_user).find_element(by=By.CSS_SELECTOR, value="input[type='file']").send_keys(tmp.name)
+                    if attachment.mimetype and 'image' in attachment.mimetype or 'video' in attachment.mimetype:
+                        driver.get(self.unique_user).find_element(by=By.CSS_SELECTOR, value="input[type='file']").send_keys(tmp.name)
+                    else:
+                        driver.get(self.unique_user).find_element(by=By.CSS_SELECTOR, value="input[type='file']").send_keys(tmp.name)
 
-                    wait_upload_xpath = "//span[@data-icon='x-alt']"
+                    wait_upload_xpath = "//span[@data-icon='x-alt'] | //span[@data-icon='plus']"
                     wait_upload = wait.get(self.unique_user).until(EC.presence_of_element_located((
                         By.XPATH, wait_upload_xpath)))
                     time.sleep(1)
-                    driver.get(self.unique_user).find_element(by=By.CSS_SELECTOR, value="span[data-icon='send']").click()
+                    send_btn = WebDriverWait(driver_user, 20).until(
+                        EC.element_to_be_clickable(
+                            (By.CSS_SELECTOR, "span[data-icon='wds-ic-send-filled']")
+                        )
+                    )
+                    send_btn.click()
                 except Exception as exx:
+                    _logger.info("Error proccessing attachments: %s" % exx)
                     pass
             msg_sent = True
             source_web = driver.get(self.unique_user).page_source
@@ -488,7 +525,7 @@ class SendWAMessage(models.TransientModel):
         try:
             driver.get(self.unique_user).title
             return True
-        except WebDriverException:
+        except (WebDriverException, Exception) as ex:
             is_session_open[self.unique_user] = False
             return False
 
@@ -498,7 +535,7 @@ class SendWAMessage(models.TransientModel):
         status = False
         if driver.get(self.unique_user):
             status = driver.get(self.unique_user).execute_script(
-                "if (document.querySelector('*[data-icon=chat]') !== null) { return true } else { return false }"
+                "if (document.querySelector('*[data-icon=new-chat-outline]') !== null || document.querySelector('*[data-icon=chats-filled]') !== null || document.querySelector('div[id=side]') !== null ) { return true } else { return false }"
             )
         return status
 
@@ -515,28 +552,29 @@ class SendWAMessage(models.TransientModel):
         options[unique_user].add_argument('--no-sandbox')
         options[unique_user].add_argument('--window-size=1366,768')
         options[unique_user].add_argument('--start-maximized')
-        options[unique_user].add_argument('--remote-debugging-port=9222')
-        options[unique_user].add_argument('--remote-debugging-address=0.0.0.0')
         # options[unique_user].add_argument('--disable-logging')
         # options[unique_user].add_argument('--enable-logging=stderr')
+        options[unique_user].add_argument('--remote-debugging-port=9222')
+        options[unique_user].add_argument('--remote-debugging-address=0.0.0.0')
         options[unique_user].add_argument('--disable-gpu')
         user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.3312.0 Safari/537.36'
         options[unique_user].add_argument('user-agent='+user_agent)
         try:
             log_path = dir_path + '/chromedriver.log'
-            service = Service(executable_path= dir_path + '/chromedriver_114', log_path=log_path)
+            service = Service(executable_path= dir_path + '/chromedriver_143', log_path=log_path)
             driver[unique_user] = webdriver.Chrome(service=service, options=options.get(unique_user))
         except Exception as bex:
             _logger.info("browser not starting exception: %s" % bex)
         wait[unique_user] = WebDriverWait(driver.get(self.unique_user), 22)
         wait5[unique_user] = WebDriverWait(driver.get(self.unique_user), 17)
+        wait4[unique_user] = WebDriverWait(driver.get(self.unique_user), 4)
         driver.get(unique_user).get("https://web.whatsapp.com")
-        ixpath = "//div[contains(@id, 'pane-side')]"
+        ixpath = "//div[contains(@id, 'side')]"
         is_session_open[self.unique_user] = True
         try:
             wait.get(unique_user).until(EC.presence_of_element_located((
                     By.XPATH, ixpath)))
-            script = 'var newEl = document.createElement("div");newEl.innerHTML = "<a href=\'#\' id=\'sender\' class=\'executor\'> </a>";var ref = document.querySelector("div#pane-side");ref.parentNode.insertBefore(newEl, ref.previousSibling);'
+            script = 'var newEl = document.createElement("div");newEl.innerHTML = "<a href=\'#\' id=\'sender\' class=\'executor\'> </a>";var ref = document.querySelector("div#side");ref.parentNode.insertBefore(newEl, ref.previousSibling);'
             driver.get(unique_user).execute_script(script)
         except Exception as e:
             pass
@@ -567,8 +605,7 @@ class SendWAMessage(models.TransientModel):
                 if resp.get('qr_image'):
                     img_data = resp.get('qr_image')
                     view_id = self.env.ref('whatsapp_integration.whatsapp_qr_view_form').id
-                    context = dict(self.env.context or {})
-                    context.update(qr_image=img_data, wiz_id=self.id)
+                    context = dict(self._context, qr_image=img_data, wiz_id=self.id)
                     if self.env.context.get('from_pos'):
                         return {
                             'name': 'Scan WhatsApp QR Code',
@@ -586,69 +623,113 @@ class SendWAMessage(models.TransientModel):
             return
 
         active_model = self.env.context.get('active_model')
+        active_record_model = self.env.context.get('active_record_model')
         partner_ids = []
         if active_model == 'hr.employee':
             partner_ids = self.employee_ids
         else:
             partner_ids = self.partner_ids
+        if active_model == 'crm.lead':
+            numbers = [number.strip() for number in self.number.split(',') if number.strip()]
+            for number in numbers:
+                if '+' not in number:
+                    number = str(self.env.company.country_id.phone_code) + number
+                check = {}
+                try:
+                    _logger.info('Sending to WhatsApp Number: %s ' % number)
+                    check = self.send_whatsapp_msgs(number, self.message)
+                except:
+                    _logger.warning('Failed to send Message to WhatsApp number ', number)
 
-        for partner in partner_ids:
-            number = ''
-            if active_model == 'hr.employee':
-                number = partner.mobile_phone
-                if '+' not in number:
-                    number = str(partner.country_id.phone_code) + partner.mobile_phone
-            else:
-                number = partner.mobile
-                if '+' not in number:
-                    number = str(partner.country_id.phone_code) + partner.mobile
-            number = ''.join(no for no in number if no.isdigit())
-            check = {}
-            try:
-                wp_message = message or self.message
-                wp_message = wp_message.replace('PARTNER', partner.name).replace('&', '%26').replace('+', '%2B')
-                check = self.send_whatsapp_msgs(number, wp_message)
-            except:
-                _logger.warning('Failed to send Message to WhatsApp number ', number)
-            if check and not check.get('isLoggedIn'):
-                if check.get('qr_image'):
-                    img_data = check.get('qr_image')
-                    view_id = self.env.ref('whatsapp_integration.whatsapp_qr_view_form').id
-                    context = dict(self.env.context or {})
-                    context.update(qr_image=img_data, wiz_id=self.id)
-                    if self.env.context.get('from_pos'):
+                if check and not check.get('isLoggedIn'):
+                    if check.get('qr_image'):
+                        img_data = check.get('qr_image')
+                        view_id = self.env.ref('whatsapp_integration.whatsapp_qr_view_form').id
+                        context = dict(self.env.context or {})
+                        context.update(qr_image=img_data, wiz_id=self.id)
                         return {
-                            'name': 'Scan WhatsApp QR Code',
-                            'qr_img': img_data,
-                        }
-                    return {
-                            'name':_("Scan WhatsApp QR Code"),
-                            'view_mode': 'form',
-                            'view_id': view_id,
-                            'res_model': 'whatsapp.scan.qr',
-                            'type': 'ir.actions.act_window',
-                            'target': 'new',
-                            'context': context,
-                        }
+                                'name':_("Scan WhatsApp QR Code"),
+                                'view_mode': 'form',
+                                'view_id': view_id,
+                                'view_type': 'form',
+                                'res_model': 'whatsapp.scan.qr',
+                                'type': 'ir.actions.act_window',
+                                'target': 'new',
+                                'context': context,
+                            }
+        else:
+            for partner in partner_ids:
+                number = ''
+                if active_model == 'hr.employee':
+                    number = partner.mobile_phone
+                    if '+' not in number:
+                        number = str(partner.country_id.phone_code) + partner.mobile_phone
+                else:
+                    number = partner.mobile
+                    if '+' not in number:
+                        number = str(partner.country_id.phone_code) + partner.mobile
+                number = ''.join(no for no in number if no.isdigit())
+                check = {}
+                try:
+                    wp_message = message or self.message
+                    wp_message = wp_message.replace('PARTNER', partner.name).replace('&', '%26').replace('+', '%2B')
+                    check = self.send_whatsapp_msgs(number, wp_message)
+                except:
+                    _logger.warning('Failed to send Message to WhatsApp number ', number)
+                if check and not check.get('isLoggedIn'):
+                    if check.get('qr_image'):
+                        img_data = check.get('qr_image')
+                        view_id = self.env.ref('whatsapp_integration.whatsapp_qr_view_form').id
+                        context = dict(self._context, qr_image=img_data, wiz_id=self.id)
+                        if self.env.context.get('from_pos'):
+                            return {
+                                'name': 'Scan WhatsApp QR Code',
+                                'qr_img': img_data,
+                            }
+                        return {
+                                'name':_("Scan WhatsApp QR Code"),
+                                'view_mode': 'form',
+                                'view_id': view_id,
+                                'res_model': 'whatsapp.scan.qr',
+                                'type': 'ir.actions.act_window',
+                                'target': 'new',
+                                'context': context,
+                            }
         if msg_sent:
             if not active_model:
                 return True
             res_id = self.env.context.get('active_id')
             rec = self.env[active_model].browse(res_id)
             if active_model == 'sale.order':
-                rec.message_post(body=_("%s %s sent via WhatsApp") % (_('Quotation') if rec.state in ('draft', 'sent', 'cancel') else _('Sales Order'), rec.name))
+                rec.message_post(body=Markup("%s %s sent via WhatsApp") % (_('Quotation') if rec.state in ('draft', 'sent', 'cancel') else _('Sales Order'), rec.name))
                 if rec.state == 'draft':
                     rec.write({'state': 'sent'})
             elif active_model == 'account.move':
-                rec.message_post(body=_("Invoice %s sent via WhatsApp") % (rec.name))
+                rec.message_post(body=Markup("Invoice %s sent via WhatsApp") % (rec.name))
             elif active_model == 'purchase.order':
-                rec.message_post(body=_("%s %s sent via WhatsApp") % (_('Request for Quotation') if rec.state in ['draft', 'sent'] else _('Purchase Order'), rec.name))
+                rec.message_post(body=Markup("%s %s sent via WhatsApp") % (_('Request for Quotation') if rec.state in ['draft', 'sent'] else _('Purchase Order'), rec.name))
                 if rec.state == 'draft':
                     rec.write({'state': 'sent'})
             elif active_model == 'stock.picking':
-                rec.message_post(body=_("Delivery Order %s sent via WhatsApp") % (rec.name))
+                rec.message_post(body=Markup("Delivery Order %s sent via WhatsApp") % (rec.name))
             elif active_model == 'account.payment':
-                rec.message_post(body=_("Payment %s sent via WhatsApp") % (rec.name))
+                rec.message_post(body=Markup("Payment %s sent via WhatsApp") % (rec.name))
+            elif active_model == 'crm.lead':
+                logmessage =  Markup("<strong>Message sent to %s </strong> via WhatsApp<br/>Mobile: %s<br/><br/>Message: %s") % (rec.partner_id.name, rec.partner_id.mobile, self.message.replace('\n', '<br/>'))
+                attachments_list = []
+                for at in self.attachment_ids:
+                    attachments_list.append((at.name, base64.decodebytes(at.datas)))
+                rec.message_post(body=logmessage, attachments=attachments_list)
+            elif active_model == 'survey.survey' or active_record_model == 'survey.survey':
+                res_id = self.env.context.get('active_record_id')
+                rec = self.env[active_record_model].browse(res_id)
+                sent_partner_names = ', '.join(self.partner_ids.mapped('name') or '')
+                sent_partner_mobiles = ', '.join(self.partner_ids.mapped('mobile') or '')
+                logmessage =  Markup("Message sent to <strong>%s </strong> via WhatsApp<br/>Mobile: %s<br/><br/>Message: %s") % (sent_partner_names, sent_partner_mobiles, Markup(self.message.replace('\n', '<br/>')))
+                attachments_list = []
+                for at in self.attachment_ids:
+                    attachments_list.append((at.name, base64.decodebytes(at.datas)))
+                rec.message_post(body=logmessage, attachments=attachments_list)
         else:
             view_id = self.env.ref('whatsapp_integration.whatsapp_retry_msg_view_form').id
             context = dict(self.env.context or {})
@@ -683,16 +764,6 @@ class ScanWAQRCode(models.TransientModel):
 
     name = fields.Char()
 
-    @api.model
-    def get_view(self, view_id=None, view_type='form', **options):
-        res = super(ScanWAQRCode, self).get_view(view_id, view_type, **options)
-        if view_type == 'form':
-            doc = etree.XML(res['arch'])
-            for node in doc.xpath("//img[hasclass('qr_img')]"):
-                node.set('src', self.env.context.get('qr_image'))
-            res['arch'] = etree.tostring(doc, encoding='unicode')
-        return res
-
     def action_send_msg(self):
         res_id = self.env.context.get('wiz_id')
         if res_id:
@@ -713,4 +784,3 @@ class RetryWAMsg(models.TransientModel):
             time.sleep(5)
             self.env['whatsapp.msg'].browse(res_id).action_send_msg()
         return True
-

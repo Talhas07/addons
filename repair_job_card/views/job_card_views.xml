@@ -20,7 +20,7 @@
                         <field name="product_bar_code" readonly="True"/>
                         <field name="technician_id" readonly="True"/>
                         <field name="product_id"/>
-                        <field name="description"/>
+                        <!-- <field name="description"/> -->
                         <field name="customer_reference"/>
                     </group>
 

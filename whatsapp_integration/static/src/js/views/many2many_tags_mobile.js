@@ -1,26 +1,33 @@
-/** @odoo-module **/
+/* @odoo-module */
 
+import { onMounted } from "@odoo/owl";
+
+import { _t } from "@web/core/l10n/translation";
 import { registry } from "@web/core/registry";
-import { useOpenMany2XRecord } from "@web/views/fields/relational_utils";
+import { TagsList } from "@web/core/tags_list/tags_list";
 import { sprintf } from "@web/core/utils/strings";
-
-import { Many2ManyTagsField } from "@web/views/fields/many2many_tags/many2many_tags_field";
-import { TagsList } from "@web/views/fields/many2many_tags/tags_list";
-
-const { onMounted, onWillUpdateProps } = owl;
+import {
+    Many2ManyTagsField,
+    many2ManyTagsField,
+} from "@web/views/fields/many2many_tags/many2many_tags_field";
+import { useOpenMany2XRecord } from "@web/views/fields/relational_utils";
 
 export class FieldMany2ManyTagsMobileTagsList extends TagsList {}
 FieldMany2ManyTagsMobileTagsList.template = "FieldMany2ManyTagsMobileTagsList";
 
-
 export class FieldMany2ManyTagsMobile extends Many2ManyTagsField {
+    static props = {
+        ...Many2ManyTagsField.props,
+        context: { type: Object, optional: true },
+    };
+
     setup() {
         super.setup();
 
         this.openedDialogs = 0;
         this.recordsIdsToAdd = [];
         this.openMany2xRecord = useOpenMany2XRecord({
-            resModel: this.props.relation,
+            resModel: this.relation,
             activeActions: {
                 create: false,
                 createEdit: false,
@@ -35,64 +42,83 @@ export class FieldMany2ManyTagsMobile extends Many2ManyTagsField {
             fieldString: this.props.string,
         });
 
-        // Using onWillStart causes an infinite loop, onMounted will handle the initial
-        // check and onWillUpdateProps handles any addition to the field.
-        onMounted(this.checkMobiles.bind(this, this.props));
-        onWillUpdateProps(this.checkMobiles.bind(this));
+        const update = this.update;
+        this.update = async (object) => {
+            await update(object);
+            await this.checkMobiles();
+        };
+
+        onMounted(() => {
+            this.checkMobiles();
+        });
     }
 
-    async checkMobiles(props) {
-        const invalidRecords = props.value.records.filter((record) => !record.data.mobile || !record.data.country_id);
+    async checkMobiles() {
+        const list = this.props.record.data[this.props.name];
+        const invalidRecords = list.records.filter((record) => !record.data.mobile || !record.data.country_id);
         // Remove records with invalid data, open form view to edit those and readd them if they are updated correctly.
         const dialogDefs = [];
         for (const record of invalidRecords) {
-            dialogDefs.push(this.openMany2xRecord({
-                resId: record.resId,
-                context: props.record.getFieldContext(this.props.name),
-                title: sprintf(this.env._t("Edit: %s"), record.data.display_name),
-            }));
+            dialogDefs.push(
+                this.openMany2xRecord({
+                    resId: record.resId,
+                    context: this.props.context,
+                    title: sprintf(_t("Edit: %s"), record.data.display_name),
+                })
+            );
         }
         this.openedDialogs += invalidRecords.length;
-        const invalidRecordIds = invalidRecords.map(rec => rec.resId);
-        if (invalidRecordIds.length) {
-            this.props.value.replaceWith(props.value.currentIds.filter(id => !invalidRecordIds.includes(id)));
+        await Promise.all(dialogDefs);
+
+        this.openedDialogs -= invalidRecords.length;
+        if (this.openedDialogs || !this.recordsIdsToAdd.length) {
+            return;
         }
-        return Promise.all(dialogDefs).then(() => {
-            this.openedDialogs -= invalidRecords.length;
-            if (this.openedDialogs || !this.recordsIdsToAdd.length) {
-                return;
-            }
-            props.value.add(this.recordsIdsToAdd, { isM2M: true });
-            this.recordsIdsToAdd = [];
+
+        const invalidRecordIds = invalidRecords.map((rec) => rec.resId);
+        await list.addAndRemove({
+            remove: invalidRecordIds.filter((id) => !this.recordsIdsToAdd.includes(id)),
+            reload: true,
         });
+        this.recordsIdsToAdd = [];
     }
 
     get tags() {
         // Add mobile to our tags
         const tags = super.tags;
-        const mobileByResId = this.props.value.records.reduce((acc, record) => {
-            acc[record.resId] = record.data.mobile;
-            acc[record.countryId] = record.data.country_id;
-            return acc;
-        }, {});
+        const mobileByResId = this.props.record.data[this.props.name].records.reduce(
+            (acc, record) => {
+                acc[record.resId] = record.data.mobile;
+                acc[record.countryId] = record.data.country_id;
+                return acc;
+            },
+            {}
+        );
         tags.forEach(tag => {
             tag.mobile = mobileByResId[tag.resId];
             tag.country_id = mobileByResId[tag.countryId];
         });
         return tags;
     }
-};
+}
 
 FieldMany2ManyTagsMobile.components = {
     ...FieldMany2ManyTagsMobile.components,
     TagsList: FieldMany2ManyTagsMobileTagsList,
 };
 
-FieldMany2ManyTagsMobile.fieldsToFetch = Object.assign({},
-    Many2ManyTagsField.fieldsToFetch,
-    {mobile: {name: 'mobile', type: 'char'}, country_id: {name: 'country_id', type: 'many2one', relation: 'res.partner'}},
-);
+export const fieldMany2ManyTagsMobile = {
+    ...many2ManyTagsField,
+    component: FieldMany2ManyTagsMobile,
+    extractProps(fieldInfo, dynamicInfo) {
+        const props = many2ManyTagsField.extractProps(...arguments);
+        props.context = dynamicInfo.context;
+        return props;
+    },
+    relatedFields: (fieldInfo) => {
+        return [...many2ManyTagsField.relatedFields(fieldInfo), { name: "mobile", type: "char" }, {name: 'country_id', type: 'many2one', relation: 'res.partner'}];
+    },
+    additionalClasses: ["o_field_many2many_tags"],
+};
 
-FieldMany2ManyTagsMobile.additionalClasses = ["o_field_many2many_tags"];
-
-registry.category("fields").add("many2many_tags_mobile", FieldMany2ManyTagsMobile);
+registry.category("fields").add("many2many_tags_mobile", fieldMany2ManyTagsMobile);
