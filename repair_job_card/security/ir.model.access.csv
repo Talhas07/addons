@@ -1,6 +1,4 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_job_card_top_management,access_job_card_top_management,model_job_card,repair_management.group_top_management,1,1,1,1
-access_job_card_supervisors,access_job_card_supervisors,model_job_card,repair_management.group_supervisors,1,1,0,0
-access_job_card_technicians,access_job_card_technicians,model_job_card,repair_management.group_technicians,1,1,0,0
-access_job_card_front_desk,access_job_card_front_desk,model_job_card,accounting.group_front_desk,1,0,1,0
-
+access_job_card_manager,access_job_card_manager,model_job_card,repair_job_card.group_manager,1,1,1,1
+access_job_card_supervisor,access_job_card_supervisor,model_job_card,repair_job_card.group_supervisor,1,1,0,0
+access_job_card_technician,access_job_card_technician,model_job_card,repair_job_card.group_technician,1,1,0,0

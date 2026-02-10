@@ -63,11 +63,40 @@
         </field>
     </record>
 
+    <!-- Job Card Search View -->
+    <record id="view_job_card_search" model="ir.ui.view">
+        <field name="name">job.card.search</field>
+        <field name="model">job.card</field>
+        <field name="arch" type="xml">
+            <search string="Search Job Cards">
+                <field name="name" string="Job Card Reference"/>
+                <field name="customer_reference" string="Customer Reference"/>
+                <field name="product_bar_code" string="Barcode"/>
+                <field name="technician_id" string="Technician"/>
+                <field name="product_id" string="Product"/>
+                <separator/>
+                <filter string="My Job Cards" name="my_job_cards"
+                        domain="[('technician_id', '=', uid)]"/>
+                <separator/>
+                <filter string="Assigned" name="assigned" domain="[('status', '=', 'assigned')]"/>
+                <filter string="Under Repair" name="under_repair" domain="[('status', '=', 'under_repair')]"/>
+                <filter string="Waiting for Parts" name="waiting_parts" domain="[('status', '=', 'waiting_parts')]"/>
+                <filter string="Complete" name="complete" domain="[('status', '=', 'complete')]"/>
+                <separator/>
+                <group expand="0" string="Group By">
+                    <filter string="Technician" name="groupby_technician" context="{'group_by': 'technician_id'}"/>
+                    <filter string="Status" name="groupby_status" context="{'group_by': 'status'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
     <!-- Action for Job Card -->
     <record id="action_job_card" model="ir.actions.act_window">
         <field name="name">Job Cards</field>
         <field name="res_model">job.card</field>
         <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_job_card_search"/>
     </record>
 
     <!-- Menu Items -->

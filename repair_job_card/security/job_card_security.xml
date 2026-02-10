@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="0">
+
+        <!-- Module Category for Repair Job Cards -->
+        <record id="module_category_repair_job_card" model="ir.module.category">
+            <field name="name">Repair Job Cards</field>
+            <field name="sequence">20</field>
+        </record>
+
+        <!-- Technician Group: Base access, can see own job cards only -->
+        <record id="group_technician" model="res.groups">
+            <field name="name">Technician</field>
+            <field name="category_id" ref="module_category_repair_job_card"/>
+            <field name="comment">Can view and update only their own assigned job cards.</field>
+        </record>
+
+        <!-- Supervisor Group: Inherits Technician, can see team job cards -->
+        <record id="group_supervisor" model="res.groups">
+            <field name="name">Supervisor</field>
+            <field name="category_id" ref="module_category_repair_job_card"/>
+            <field name="implied_ids" eval="[(4, ref('group_technician'))]"/>
+            <field name="comment">Can view job cards assigned to technicians in their team.</field>
+        </record>
+
+        <!-- Manager Group: Full access to all job cards -->
+        <record id="group_manager" model="res.groups">
+            <field name="name">Manager</field>
+            <field name="category_id" ref="module_category_repair_job_card"/>
+            <field name="implied_ids" eval="[(4, ref('group_supervisor'))]"/>
+            <field name="comment">Full access to all job cards.</field>
+        </record>
+
+    </data>
+</odoo>

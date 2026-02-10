@@ -1,27 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <data noupdate="1">
 
-        <!-- Technicians: Can only see their assigned Job Cards -->
+        <!-- Technicians: Can only see their own assigned Job Cards -->
         <record id="job_card_technician_rule" model="ir.rule">
             <field name="name">Technician: View Own Job Cards</field>
             <field name="model_id" ref="model_job_card"/>
-            <field name="groups" eval="[(4, ref('repair_management.group_repair_technicians'))]"/>
-            <field name="domain_force">[('technician_id.user_id', '=', user.id)]</field>
+            <field name="groups" eval="[(4, ref('repair_job_card.group_technician'))]"/>
+            <field name="domain_force">[('technician_id', '=', user.id)]</field>
         </record>
 
-        <!-- Supervisors: Can view Job Cards of Technicians under them -->
+        <!-- Supervisors: Can view all Job Cards (team-wide visibility) -->
         <record id="job_card_supervisor_rule" model="ir.rule">
-            <field name="name">Supervisor: View Technicians' Job Cards</field>
+            <field name="name">Supervisor: View All Job Cards</field>
             <field name="model_id" ref="model_job_card"/>
-            <field name="groups" eval="[(4, ref('repair_management.group_repair_supervisors'))]"/>
-            <field name="domain_force">[('technician_id.parent_id.user_id', '=', user.id)]</field>
+            <field name="groups" eval="[(4, ref('repair_job_card.group_supervisor'))]"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
         </record>
 
-        <!-- Top Management: Full Access -->
-        <record id="job_card_top_management_rule" model="ir.rule">
-            <field name="name">Top Management: Full Access</field>
+        <!-- Managers: Full Access to all Job Cards -->
+        <record id="job_card_manager_rule" model="ir.rule">
+            <field name="name">Manager: Full Access</field>
             <field name="model_id" ref="model_job_card"/>
-            <field name="groups" eval="[(4, ref('repair_management.group_top_management'))]"/>
+            <field name="groups" eval="[(4, ref('repair_job_card.group_manager'))]"/>
             <field name="domain_force">[(1, '=', 1)]</field>
         </record>
 
