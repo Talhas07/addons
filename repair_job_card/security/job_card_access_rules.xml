@@ -2,23 +2,15 @@
 <odoo>
     <data noupdate="1">
 
-        <!-- Technicians: Can only see their own assigned Job Cards -->
-        <record id="job_card_technician_rule" model="ir.rule">
-            <field name="name">Technician: View Own Job Cards</field>
+        <!-- All internal users: Can only see Job Cards assigned to them -->
+        <record id="job_card_user_rule" model="ir.rule">
+            <field name="name">User: View Own Job Cards Only</field>
             <field name="model_id" ref="model_job_card"/>
-            <field name="groups" eval="[(4, ref('repair_job_card.group_technician'))]"/>
+            <field name="groups" eval="[(4, ref('base.group_user'))]"/>
             <field name="domain_force">[('technician_id', '=', user.id)]</field>
         </record>
 
-        <!-- Supervisors: Can view all Job Cards (team-wide visibility) -->
-        <record id="job_card_supervisor_rule" model="ir.rule">
-            <field name="name">Supervisor: View All Job Cards</field>
-            <field name="model_id" ref="model_job_card"/>
-            <field name="groups" eval="[(4, ref('repair_job_card.group_supervisor'))]"/>
-            <field name="domain_force">[(1, '=', 1)]</field>
-        </record>
-
-        <!-- Managers: Full Access to all Job Cards -->
+        <!-- Managers: Full Access to all Job Cards (overrides the user rule) -->
         <record id="job_card_manager_rule" model="ir.rule">
             <field name="name">Manager: Full Access</field>
             <field name="model_id" ref="model_job_card"/>
