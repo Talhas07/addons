@@ -5,7 +5,7 @@
     'license': 'LGPL-3',
     'summary': 'Manage Job Cards for Repair Orders',
     'author': 'NSMC',
-    'depends': ['product', 'base', 'mail'],
+    'depends': ['repair', 'repair_extension', 'mail'],
     'data': [
         'security/job_card_security.xml',
         'security/ir.model.access.csv',

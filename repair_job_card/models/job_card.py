@@ -1,5 +1,10 @@
 from odoo import models, fields, api
+from odoo.exceptions import UserError
 from datetime import datetime
+
+import logging
+_logger = logging.getLogger(__name__)
+
 
 class JobCard(models.Model):
     _name = "job.card"
@@ -105,18 +110,42 @@ class JobCard(models.Model):
     # Overrides
     @api.model
     def create(self, vals):
-        # Automatically populate fields from linked repair order
         # Ensure the job card reference is set from the sequence when not provided
         if not vals.get('name'):
             vals['name'] = self.env['ir.sequence'].next_by_code('job.card')
+
+        # Automatically populate fields from linked repair order
         if vals.get('repair_order_id'):
             repair_order = self.env['repair.order'].browse(vals['repair_order_id'])
-            vals.update({
-                'product_id': repair_order.product_id.id,
-                'description': repair_order.description,
-                'customer_reference': repair_order.client_order_ref,
-                'technician_id': repair_order.assigned_technician_id.id,
-            })
+            if repair_order.exists():
+                update_vals = {
+                    'product_id': repair_order.product_id.id if repair_order.product_id else False,
+                }
+
+                # Customer Reference (from repair_extension / cord_len)
+                if hasattr(repair_order, 'customer_reference') and repair_order.customer_reference:
+                    update_vals['customer_reference'] = repair_order.customer_reference
+
+                # Product Barcode - try product_bar_code (cord_len) first, then product_barcode (repair_extension)
+                if hasattr(repair_order, 'product_bar_code') and repair_order.product_bar_code:
+                    update_vals['product_bar_code'] = repair_order.product_bar_code
+                elif hasattr(repair_order, 'product_barcode') and repair_order.product_barcode:
+                    update_vals['product_bar_code'] = repair_order.product_barcode
+                elif repair_order.product_id and repair_order.product_id.barcode:
+                    update_vals['product_bar_code'] = repair_order.product_id.barcode
+
+                # Technician (from repair_extension)
+                if hasattr(repair_order, 'technician_id') and repair_order.technician_id:
+                    update_vals['technician_id'] = repair_order.technician_id.id
+
+                # Description - try repair_description (repair_extension) first, then internal_notes
+                if hasattr(repair_order, 'repair_description') and repair_order.repair_description:
+                    update_vals['description'] = repair_order.repair_description
+                elif hasattr(repair_order, 'internal_notes') and repair_order.internal_notes:
+                    update_vals['description'] = repair_order.internal_notes
+
+                vals.update(update_vals)
+
         return super(JobCard, self).create(vals)
 
     def write(self, vals):
@@ -130,10 +159,10 @@ class JobCard(models.Model):
         if 'diagnosis_notes' in vals or 'diagnosis_images' in vals:
             for record in self:
                 if record.diagnosis_submitted:
-                    raise ValueError("You cannot edit Diagnosis Notes or Images after they are submitted.")
+                    raise UserError("You cannot edit Diagnosis Notes or Images after they are submitted.")
+            # Mark diagnosis as submitted
+            vals['diagnosis_submitted'] = True
 
-        # Mark diagnosis as submitted
-                vals['diagnosis_submitted'] = True
         return super(JobCard, self).write(vals)
 
     def action_update_status(self, new_status):
@@ -143,3 +172,37 @@ class JobCard(models.Model):
             self.status = new_status
             if self.repair_order_id:
                 self.repair_order_id.write({'state': new_status})
+
+    @api.model
+    def _cron_create_job_cards(self):
+        """Cron job: Automatically create job cards for repair orders that don't have one yet."""
+        # Find all repair order IDs that already have a job card
+        existing_repair_ids = self.search([
+            ('repair_order_id', '!=', False)
+        ]).mapped('repair_order_id').ids
+
+        # Find repair orders that are confirmed/in-progress but have no job card
+        # Standard Odoo 18 repair states: draft, confirmed, under_repair, ready, done, cancel
+        repair_orders = self.env['repair.order'].search([
+            ('id', 'not in', existing_repair_ids),
+            ('state', 'in', ['confirmed', 'under_repair', 'ready']),
+        ])
+
+        created_count = 0
+        for repair in repair_orders:
+            try:
+                self.create({
+                    'repair_order_id': repair.id,
+                })
+                created_count += 1
+            except Exception as e:
+                _logger.warning(
+                    "Failed to create job card for repair order %s: %s",
+                    repair.name, str(e)
+                )
+
+        if created_count:
+            _logger.info(
+                "Cron: Created %d job card(s) from repair orders.", created_count
+            )
+        return True
