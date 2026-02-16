@@ -99,14 +99,18 @@ class RepairOrder(models.Model):
         help="Detailed description of the repair work to be done."
     )
     
-    # ===== Product Barcode (related field) =====
+    # ===== Product Barcode =====
     product_barcode = fields.Char(
         string='Product Barcode',
-        related='product_id.barcode',
-        readonly=True,
-        store=False,
-        help="Barcode of the product being repaired."
+        tracking=True,
+        help="Barcode of the product being repaired. Auto-filled from product if available."
     )
+
+    @api.onchange('product_id')
+    def _onchange_product_id_barcode(self):
+        """Auto-fill barcode from selected product if barcode is not already set."""
+        if self.product_id and self.product_id.barcode and not self.product_barcode:
+            self.product_barcode = self.product_id.barcode
     
     # ===== 1.2 Serial Number Capture =====
     appliance_serial_number = fields.Char(

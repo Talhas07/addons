@@ -118,33 +118,30 @@ class JobCard(models.Model):
         if vals.get('repair_order_id'):
             repair_order = self.env['repair.order'].browse(vals['repair_order_id'])
             if repair_order.exists():
-                update_vals = {
-                    'product_id': repair_order.product_id.id if repair_order.product_id else False,
-                }
+                # Product
+                if repair_order.product_id:
+                    vals['product_id'] = repair_order.product_id.id
 
-                # Customer Reference (from repair_extension / cord_len)
-                if hasattr(repair_order, 'customer_reference') and repair_order.customer_reference:
-                    update_vals['customer_reference'] = repair_order.customer_reference
+                # Customer Reference
+                if repair_order.customer_reference:
+                    vals['customer_reference'] = repair_order.customer_reference
 
-                # Product Barcode - try product_bar_code (cord_len) first, then product_barcode (repair_extension)
-                if hasattr(repair_order, 'product_bar_code') and repair_order.product_bar_code:
-                    update_vals['product_bar_code'] = repair_order.product_bar_code
-                elif hasattr(repair_order, 'product_barcode') and repair_order.product_barcode:
-                    update_vals['product_bar_code'] = repair_order.product_barcode
-                elif repair_order.product_id and repair_order.product_id.barcode:
-                    update_vals['product_bar_code'] = repair_order.product_id.barcode
+                # Product Barcode - from repair order fields, fallback to product master
+                barcode = (
+                    repair_order.product_barcode
+                    or (repair_order.product_id and repair_order.product_id.barcode)
+                    or False
+                )
+                if barcode:
+                    vals['product_bar_code'] = barcode
 
-                # Technician (from repair_extension)
-                if hasattr(repair_order, 'technician_id') and repair_order.technician_id:
-                    update_vals['technician_id'] = repair_order.technician_id.id
+                # Technician
+                if repair_order.technician_id:
+                    vals['technician_id'] = repair_order.technician_id.id
 
-                # Description - try repair_description (repair_extension) first, then internal_notes
-                if hasattr(repair_order, 'repair_description') and repair_order.repair_description:
-                    update_vals['description'] = repair_order.repair_description
-                elif hasattr(repair_order, 'internal_notes') and repair_order.internal_notes:
-                    update_vals['description'] = repair_order.internal_notes
-
-                vals.update(update_vals)
+                # Description
+                if repair_order.repair_description:
+                    vals['description'] = repair_order.repair_description
 
         return super(JobCard, self).create(vals)
 
