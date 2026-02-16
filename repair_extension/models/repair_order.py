@@ -158,6 +158,11 @@ class RepairOrder(models.Model):
         help="Technical diagnosis performed by the technician."
     )
     
+    diagnosis_images = fields.Binary(
+        string='Diagnosis Images',
+        help="Uploaded diagnosis images from the technician."
+    )
+    
     repair_recommendations = fields.Html(
         string='Repair Recommendations',
         help="Technician's recommendations for repair."

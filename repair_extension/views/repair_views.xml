@@ -95,6 +95,7 @@
                         <group>
                             <group string="Technical Diagnosis">
                                 <field name="diagnosis_notes" placeholder="Enter technical diagnosis details..."/>
+                                <field name="diagnosis_images" widget="image"/>
                                 <field name="root_cause"/>
                             </group>
                             <group string="Recommendations">

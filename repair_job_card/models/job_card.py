@@ -1,5 +1,6 @@
 from odoo import models, fields, api
 from odoo.exceptions import UserError
+from odoo.tools import html2plaintext
 from datetime import datetime
 
 import logging
@@ -142,6 +143,14 @@ class JobCard(models.Model):
                 # Description
                 if repair_order.repair_description:
                     vals['description'] = repair_order.repair_description
+
+                # Diagnosis Notes (Html on repair order → Text on job card)
+                if repair_order.diagnosis_notes:
+                    vals['diagnosis_notes'] = html2plaintext(repair_order.diagnosis_notes)
+
+                # Diagnosis Images
+                if repair_order.diagnosis_images:
+                    vals['diagnosis_images'] = repair_order.diagnosis_images
 
         return super(JobCard, self).create(vals)
 
