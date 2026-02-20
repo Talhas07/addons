@@ -38,6 +38,7 @@ This module is designed to work alongside the standard Odoo 18 repair module.
         'views/repair_views.xml',
         'report/diagnostic_report.xml',
         'report/diagnostic_report_template.xml',
+        'report/technical_report_template.xml',
         'report/diagnostic_report_insurance_template.xml',
         'wizard/generate_diagnostic_report_views.xml',
         'data/mail_template_data.xml',

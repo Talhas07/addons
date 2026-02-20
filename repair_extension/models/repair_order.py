@@ -171,6 +171,29 @@ class RepairOrder(models.Model):
         string='Root Cause',
         help="Identified root cause of the fault."
     )
+
+    # ===== Technical Report Fields =====
+    report_title = fields.Char(
+        string='Report Title',
+        help="Title for the technical report, e.g. 'POWER FAULT / NO POWER'."
+    )
+    reported_fault = fields.Char(
+        string='Reported Fault',
+        help="Short description of the fault reported by the customer, e.g. 'No Power'."
+    )
+    additional_observations = fields.Html(
+        string='Additional Observations',
+        help="Additional observations noted during inspection."
+    )
+    technician_remarks = fields.Html(
+        string='Technician Remarks',
+        help="Final remarks from the technician summarising the findings."
+    )
+    prepared_by = fields.Many2one(
+        'res.users',
+        string='Prepared By',
+        help="Manager or supervisor who prepared/approved the report."
+    )
     
     diagnosis_date = fields.Datetime(
         string='Diagnosis Date',
@@ -337,9 +360,14 @@ class RepairOrder(models.Model):
         return True
 
     def action_print_diagnostic_report(self):
-        """Print the Diagnostic Technical Report."""
+        """Print the Diagnostic Report (standard, without technical sections)."""
         self.ensure_one()
         return self.env.ref('repair_extension.action_report_diagnostic').report_action(self)
+
+    def action_print_technical_report(self):
+        """Print the full Technical Report."""
+        self.ensure_one()
+        return self.env.ref('repair_extension.action_report_technical').report_action(self)
 
     def action_generate_diagnostic_report(self):
         """Open wizard to generate diagnostic report with options."""

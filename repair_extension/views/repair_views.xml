@@ -66,6 +66,9 @@
                     <button name="action_print_diagnostic_report" 
                             string="Print Diagnostic Report" 
                             type="object"/>
+                    <button name="action_print_technical_report" 
+                            string="Print Technical Report" 
+                            type="object"/>
                     <button name="action_create_diagnostic_invoice"
                             string="Create Diagnostic Invoice"
                             type="object"
@@ -108,14 +111,15 @@
                         </group>
                         <group>
                             <group string="Technical Diagnosis">
-                                <field name="diagnosis_notes" placeholder="Enter technical diagnosis details..."/>
                                 <field name="diagnosis_images" widget="image"/>
-                                <field name="root_cause"/>
+                                <field name="root_cause" placeholder="Cause of the fault..."/>
                             </group>
                             <group string="Recommendations">
                                 <field name="repair_recommendations" placeholder="Enter repair recommendations..."/>
                             </group>
                         </group>
+                        <separator string="Diagnosis Notes"/>
+                        <field name="diagnosis_notes" widget="html" placeholder="Enter technical diagnosis details..."/>
                         <group>
                             <group string="Diagnosis Details">
                                 <field name="diagnosis_date"/>
@@ -128,6 +132,22 @@
                             </group>
                             <group string="Diagnostic Fee">
                                 <field name="diagnostic_fee"/>
+                            </group>
+                        </group>
+                        <separator string="Technical Report Details"/>
+                        <group>
+                            <group>
+                                <field name="report_title" placeholder="e.g. POWER FAULT / NO POWER"/>
+                                <field name="reported_fault" placeholder="e.g. No Power"/>
+                                <field name="prepared_by" options="{'no_create': True}"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group string="Additional Observations">
+                                <field name="additional_observations" nolabel="1" placeholder="Additional observations noted during inspection..."/>
+                            </group>
+                            <group string="Technician Remarks">
+                                <field name="technician_remarks" nolabel="1" placeholder="Final remarks summarising the findings..."/>
                             </group>
                         </group>
                         <separator string="Insurance / Detailed Assessment"/>

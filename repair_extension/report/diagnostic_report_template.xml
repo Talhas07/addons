@@ -2,7 +2,7 @@
 <odoo>
     <data>
         
-        <!-- Diagnostic Technical Report Template -->
+        <!-- Diagnostic Report Template (Standard - no technical sections) -->
         <template id="report_diagnostic_technical">
             <t t-call="web.html_container">
                 <t t-foreach="docs" t-as="o">
@@ -15,7 +15,7 @@
                             <div class="row">
                                 <div class="col-12 text-center">
                                     <h2 style="border-bottom: 2px solid #333; padding-bottom: 10px;">
-                                        <strong>DIAGNOSTIC TECHNICAL REPORT</strong>
+                                        <strong>DIAGNOSTIC REPORT</strong>
                                     </h2>
                                 </div>
                             </div>
@@ -31,6 +31,10 @@
                                         <tr t-if="o.manual_job_card">
                                             <td><strong>Job Card #:</strong></td>
                                             <td><span t-field="o.manual_job_card"/></td>
+                                        </tr>
+                                        <tr t-if="o.customer_reference">
+                                            <td><strong>Customer Reference:</strong></td>
+                                            <td><span t-field="o.customer_reference"/></td>
                                         </tr>
                                         <tr>
                                             <td><strong>Report Date:</strong></td>
@@ -110,10 +114,6 @@
                                             <td><strong>Serial Number:</strong></td>
                                             <td><span t-field="o.appliance_serial_number"/></td>
                                         </tr>
-                                        <tr t-if="o.lot_id">
-                                            <td><strong>Lot/Serial (System):</strong></td>
-                                            <td><span t-field="o.lot_id.name"/></td>
-                                        </tr>
                                     </table>
                                 </div>
                                 <div class="col-6">
@@ -125,10 +125,6 @@
                                         <tr t-if="o.purchase_date">
                                             <td><strong>Purchase Date:</strong></td>
                                             <td><span t-field="o.purchase_date"/></td>
-                                        </tr>
-                                        <tr t-if="o.supplier_invoice_ref">
-                                            <td><strong>Supplier Invoice:</strong></td>
-                                            <td><span t-field="o.supplier_invoice_ref"/></td>
                                         </tr>
                                         <tr t-if="o.condition_on_receipt">
                                             <td><strong>Condition on Receipt:</strong></td>
@@ -151,13 +147,13 @@
                                             <td style="width: 200px;"><strong>Warranty Status:</strong></td>
                                             <td>
                                                 <t t-if="o.warranty_status == 'valid'">
-                                                    <span style="color: green; font-weight: bold;">✓ VALID WARRANTY</span>
+                                                    <span style="color: green; font-weight: bold;">VALID WARRANTY</span>
                                                 </t>
                                                 <t t-elif="o.warranty_status == 'expired'">
-                                                    <span style="color: red; font-weight: bold;">✗ WARRANTY EXPIRED</span>
+                                                    <span style="color: red; font-weight: bold;">WARRANTY EXPIRED</span>
                                                 </t>
                                                 <t t-elif="o.warranty_status == 'void'">
-                                                    <span style="color: orange; font-weight: bold;">⚠ WARRANTY VOID</span>
+                                                    <span style="color: orange; font-weight: bold;">WARRANTY VOID</span>
                                                 </t>
                                                 <t t-elif="o.warranty_status == 'not_applicable'">
                                                     <span>Not Applicable</span>
@@ -186,7 +182,7 @@
                             <!-- Fault Description -->
                             <div class="row mt-4">
                                 <div class="col-12">
-                                    <h4 style="background-color: #f0f0f0; padding: 8px;">Fault Description (Customer Reported)</h4>
+                                    <h4 style="background-color: #f0f0f0; padding: 8px;">Fault Description</h4>
                                     <div class="p-2" style="border: 1px solid #ddd; min-height: 80px;">
                                         <t t-if="o.fault_description">
                                             <t t-out="o.fault_description"/>
@@ -198,43 +194,16 @@
                                 </div>
                             </div>
                             
-                            <!-- Technical Diagnosis -->
+                            <!-- Diagnosis Notes -->
                             <div class="row mt-4">
                                 <div class="col-12">
-                                    <h4 style="background-color: #f0f0f0; padding: 8px;">Technical Diagnosis</h4>
+                                    <h4 style="background-color: #f0f0f0; padding: 8px;">Diagnosis Notes</h4>
                                     <div class="p-2" style="border: 1px solid #ddd; min-height: 100px;">
                                         <t t-if="o.diagnosis_notes">
                                             <t t-out="o.diagnosis_notes"/>
                                         </t>
                                         <t t-else="">
                                             <span style="color: #999;">No diagnosis notes provided.</span>
-                                        </t>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Root Cause -->
-                            <t t-if="o.root_cause">
-                                <div class="row mt-4">
-                                    <div class="col-12">
-                                        <h4 style="background-color: #f0f0f0; padding: 8px;">Root Cause Analysis</h4>
-                                        <div class="p-2" style="border: 1px solid #ddd; min-height: 60px;">
-                                            <span t-field="o.root_cause"/>
-                                        </div>
-                                    </div>
-                                </div>
-                            </t>
-                            
-                            <!-- Repair Recommendations -->
-                            <div class="row mt-4">
-                                <div class="col-12">
-                                    <h4 style="background-color: #f0f0f0; padding: 8px;">Repair Recommendations</h4>
-                                    <div class="p-2" style="border: 1px solid #ddd; min-height: 80px;">
-                                        <t t-if="o.repair_recommendations">
-                                            <t t-out="o.repair_recommendations"/>
-                                        </t>
-                                        <t t-else="">
-                                            <span style="color: #999;">No recommendations provided.</span>
                                         </t>
                                     </div>
                                 </div>
