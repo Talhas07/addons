@@ -77,7 +77,6 @@
                             invisible="not diagnostic_invoice_id"/>
                 </xpath>
                 
-                <!-- Add diagnostic_invoice_id and diagnostic_fee as invisible for domain use -->
                 <xpath expr="//sheet" position="inside">
                     <field name="diagnostic_invoice_id" invisible="1"/>
                     <field name="diagnostic_fee" invisible="1"/>

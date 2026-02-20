@@ -270,8 +270,12 @@ class RepairOrder(models.Model):
         if self.diagnostic_invoice_id:
             raise UserError(_('A diagnostic invoice already exists for this repair order.'))
 
+        delivery_partner = self.partner_id
+        if hasattr(self, 'address_id') and self.address_id:
+            delivery_partner = self.address_id
+
         fpos = self.env['account.fiscal.position']._get_fiscal_position(
-            self.partner_id, delivery=self.address_id
+            self.partner_id, delivery=delivery_partner
         )
 
         invoice_vals = {
@@ -279,7 +283,6 @@ class RepairOrder(models.Model):
             'partner_id': self.partner_id.id,
             'currency_id': self.env.company.currency_id.id,
             'invoice_origin': self.name,
-            'repair_ids': [(4, self.id)],
             'fiscal_position_id': fpos.id,
             'invoice_line_ids': [(0, 0, {
                 'name': _('Diagnostic Fee - %s') % self.name,
@@ -288,7 +291,11 @@ class RepairOrder(models.Model):
             })],
         }
 
-        if self.address_id:
+        # Link repair order to invoice if the field exists (Odoo version dependent)
+        if 'repair_ids' in self.env['account.move']._fields:
+            invoice_vals['repair_ids'] = [(4, self.id)]
+
+        if hasattr(self, 'address_id') and self.address_id:
             invoice_vals['partner_shipping_id'] = self.address_id.id
 
         invoice = self.env['account.move'].with_company(self.env.company).with_context(
