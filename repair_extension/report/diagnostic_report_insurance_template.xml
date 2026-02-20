@@ -1,0 +1,377 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Insurance Diagnostic Technical Report Template -->
+        <template id="report_diagnostic_insurance">
+            <t t-call="web.html_container">
+                <t t-foreach="docs" t-as="o">
+                    <t t-call="web.external_layout">
+
+                        <div class="page">
+                            <div class="oe_structure"/>
+
+                            <!-- Header -->
+                            <div class="row">
+                                <div class="col-12 text-center">
+                                    <h2 style="border-bottom: 3px solid #333; padding-bottom: 10px;">
+                                        <strong>INSURANCE DIAGNOSTIC TECHNICAL REPORT</strong>
+                                    </h2>
+                                    <p style="color: #666; font-style: italic;">Comprehensive Assessment for Insurance Purposes</p>
+                                </div>
+                            </div>
+
+                            <!-- Reference Numbers -->
+                            <div class="row mt-4">
+                                <div class="col-6">
+                                    <table class="table table-sm table-borderless">
+                                        <tr>
+                                            <td><strong>Repair Order #:</strong></td>
+                                            <td><span t-field="o.name"/></td>
+                                        </tr>
+                                        <tr t-if="o.manual_job_card">
+                                            <td><strong>Job Card #:</strong></td>
+                                            <td><span t-field="o.manual_job_card"/></td>
+                                        </tr>
+                                        <tr t-if="o.insurance_claim_ref">
+                                            <td><strong>Insurance Claim #:</strong></td>
+                                            <td><span t-field="o.insurance_claim_ref"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Report Date:</strong></td>
+                                            <td><span t-esc="datetime.datetime.now().strftime('%Y-%m-%d %H:%M')"/></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <div class="col-6">
+                                    <table class="table table-sm table-borderless">
+                                        <tr t-if="o.diagnosis_date">
+                                            <td><strong>Diagnosis Date:</strong></td>
+                                            <td><span t-field="o.diagnosis_date" t-options='{"format": "dd/MM/yyyy HH:mm"}'/></td>
+                                        </tr>
+                                        <tr t-if="o.diagnosed_by">
+                                            <td><strong>Diagnosed By:</strong></td>
+                                            <td><span t-field="o.diagnosed_by.name"/></td>
+                                        </tr>
+                                        <tr t-if="o.technician_id">
+                                            <td><strong>Assigned Technician:</strong></td>
+                                            <td><span t-field="o.technician_id.name"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Status:</strong></td>
+                                            <td><span t-field="o.state"/></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Customer Information -->
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <h4 style="background-color: #f0f0f0; padding: 8px;">Customer Information</h4>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-6">
+                                    <table class="table table-sm table-borderless">
+                                        <tr t-if="o.partner_id">
+                                            <td><strong>Customer Name:</strong></td>
+                                            <td><span t-field="o.partner_id.name"/></td>
+                                        </tr>
+                                        <tr t-if="o.partner_id and o.partner_id.phone">
+                                            <td><strong>Phone:</strong></td>
+                                            <td><span t-field="o.partner_id.phone"/></td>
+                                        </tr>
+                                        <tr t-if="o.partner_id and o.partner_id.email">
+                                            <td><strong>Email:</strong></td>
+                                            <td><span t-field="o.partner_id.email"/></td>
+                                        </tr>
+                                        <tr t-if="o.customer_reference">
+                                            <td><strong>Customer Reference:</strong></td>
+                                            <td><span t-field="o.customer_reference"/></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <div class="col-6">
+                                    <div t-if="o.partner_id" t-field="o.partner_id"
+                                         t-options='{"widget": "contact", "fields": ["address"], "no_marker": True}'/>
+                                </div>
+                            </div>
+
+                            <!-- Appliance Details -->
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <h4 style="background-color: #f0f0f0; padding: 8px;">Appliance Details</h4>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-6">
+                                    <table class="table table-sm table-borderless">
+                                        <tr t-if="o.product_id">
+                                            <td><strong>Product:</strong></td>
+                                            <td><span t-field="o.product_id.display_name"/></td>
+                                        </tr>
+                                        <tr t-if="o.appliance_brand">
+                                            <td><strong>Brand:</strong></td>
+                                            <td><span t-field="o.appliance_brand"/></td>
+                                        </tr>
+                                        <tr t-if="o.appliance_model">
+                                            <td><strong>Model:</strong></td>
+                                            <td><span t-field="o.appliance_model"/></td>
+                                        </tr>
+                                        <tr t-if="o.appliance_serial_number">
+                                            <td><strong>Serial Number:</strong></td>
+                                            <td><span t-field="o.appliance_serial_number"/></td>
+                                        </tr>
+                                        <tr t-if="o.lot_id">
+                                            <td><strong>Lot/Serial (System):</strong></td>
+                                            <td><span t-field="o.lot_id.name"/></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <div class="col-6">
+                                    <table class="table table-sm table-borderless">
+                                        <tr t-if="o.supplier_id">
+                                            <td><strong>Supplier:</strong></td>
+                                            <td><span t-field="o.supplier_id.name"/></td>
+                                        </tr>
+                                        <tr t-if="o.purchase_date">
+                                            <td><strong>Purchase Date:</strong></td>
+                                            <td><span t-field="o.purchase_date"/></td>
+                                        </tr>
+                                        <tr t-if="o.supplier_invoice_ref">
+                                            <td><strong>Supplier Invoice:</strong></td>
+                                            <td><span t-field="o.supplier_invoice_ref"/></td>
+                                        </tr>
+                                        <tr t-if="o.condition_on_receipt">
+                                            <td><strong>Condition on Receipt:</strong></td>
+                                            <td><span t-field="o.condition_on_receipt"/></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Warranty Information -->
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <h4 style="background-color: #f0f0f0; padding: 8px;">Warranty Information</h4>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <table class="table table-sm table-borderless">
+                                        <tr>
+                                            <td style="width: 200px;"><strong>Warranty Status:</strong></td>
+                                            <td>
+                                                <t t-if="o.warranty_status == 'valid'">
+                                                    <span style="color: green; font-weight: bold;">VALID WARRANTY</span>
+                                                </t>
+                                                <t t-elif="o.warranty_status == 'expired'">
+                                                    <span style="color: red; font-weight: bold;">WARRANTY EXPIRED</span>
+                                                </t>
+                                                <t t-elif="o.warranty_status == 'void'">
+                                                    <span style="color: orange; font-weight: bold;">WARRANTY VOID</span>
+                                                </t>
+                                                <t t-elif="o.warranty_status == 'not_applicable'">
+                                                    <span>Not Applicable</span>
+                                                </t>
+                                                <t t-else="">
+                                                    <span>Unknown</span>
+                                                </t>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Accessories Received -->
+                            <t t-if="o.accessories_received">
+                                <div class="row mt-4">
+                                    <div class="col-12">
+                                        <h4 style="background-color: #f0f0f0; padding: 8px;">Accessories Received</h4>
+                                        <div class="p-2" style="border: 1px solid #ddd; min-height: 50px;">
+                                            <span t-field="o.accessories_received"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </t>
+
+                            <!-- Fault Description -->
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <h4 style="background-color: #f0f0f0; padding: 8px;">Fault Description (Customer Reported)</h4>
+                                    <div class="p-2" style="border: 1px solid #ddd; min-height: 80px;">
+                                        <t t-if="o.fault_description">
+                                            <t t-out="o.fault_description"/>
+                                        </t>
+                                        <t t-else="">
+                                            <span style="color: #999;">No fault description provided.</span>
+                                        </t>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Technical Diagnosis -->
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <h4 style="background-color: #f0f0f0; padding: 8px;">Technical Diagnosis</h4>
+                                    <div class="p-2" style="border: 1px solid #ddd; min-height: 100px;">
+                                        <t t-if="o.diagnosis_notes">
+                                            <t t-out="o.diagnosis_notes"/>
+                                        </t>
+                                        <t t-else="">
+                                            <span style="color: #999;">No diagnosis notes provided.</span>
+                                        </t>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Root Cause -->
+                            <t t-if="o.root_cause">
+                                <div class="row mt-4">
+                                    <div class="col-12">
+                                        <h4 style="background-color: #f0f0f0; padding: 8px;">Root Cause Analysis</h4>
+                                        <div class="p-2" style="border: 1px solid #ddd; min-height: 60px;">
+                                            <span t-field="o.root_cause"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </t>
+
+                            <!-- INSURANCE-SPECIFIC SECTIONS -->
+
+                            <!-- Cause of Damage Assessment -->
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <h4 style="background-color: #d4edda; padding: 8px; border-left: 4px solid #28a745;">
+                                        Cause of Damage Assessment
+                                    </h4>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <table class="table table-sm table-bordered">
+                                        <tr>
+                                            <td style="width: 250px; background-color: #f8f9fa;"><strong>Primary Cause of Damage:</strong></td>
+                                            <td>
+                                                <t t-if="o.damage_cause">
+                                                    <span t-field="o.damage_cause"/>
+                                                </t>
+                                                <t t-else="">
+                                                    <span style="color: #999;">Not assessed</span>
+                                                </t>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="background-color: #f8f9fa;"><strong>Negligence Assessment:</strong></td>
+                                            <td>
+                                                <t t-if="o.negligence_assessment == 'no_negligence'">
+                                                    <span style="color: green; font-weight: bold;">No Customer Negligence</span>
+                                                    <p class="mt-1 mb-0" style="font-size: 0.9em;">
+                                                        Based on the technical examination, the damage is not attributable to customer misuse or negligence.
+                                                    </p>
+                                                </t>
+                                                <t t-elif="o.negligence_assessment == 'partial_negligence'">
+                                                    <span style="color: orange; font-weight: bold;">Partial Customer Negligence</span>
+                                                    <p class="mt-1 mb-0" style="font-size: 0.9em;">
+                                                        The technical examination indicates that customer actions may have partially contributed to the damage.
+                                                    </p>
+                                                </t>
+                                                <t t-elif="o.negligence_assessment == 'customer_negligence'">
+                                                    <span style="color: red; font-weight: bold;">Customer Negligence</span>
+                                                    <p class="mt-1 mb-0" style="font-size: 0.9em;">
+                                                        The technical examination indicates that the damage is primarily attributable to customer misuse or negligence.
+                                                    </p>
+                                                </t>
+                                                <t t-else="">
+                                                    <span style="color: #999;">Undetermined</span>
+                                                </t>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Detailed Technical Explanation (Insurance) -->
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <h4 style="background-color: #d4edda; padding: 8px; border-left: 4px solid #28a745;">
+                                        Detailed Technical Explanation
+                                    </h4>
+                                    <div class="p-2" style="border: 1px solid #ddd; min-height: 120px;">
+                                        <t t-if="o.detailed_technical_explanation">
+                                            <t t-out="o.detailed_technical_explanation"/>
+                                        </t>
+                                        <t t-else="">
+                                            <span style="color: #999;">No detailed technical explanation provided.</span>
+                                        </t>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Repair Recommendations -->
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <h4 style="background-color: #f0f0f0; padding: 8px;">Repair Recommendations</h4>
+                                    <div class="p-2" style="border: 1px solid #ddd; min-height: 80px;">
+                                        <t t-if="o.repair_recommendations">
+                                            <t t-out="o.repair_recommendations"/>
+                                        </t>
+                                        <t t-else="">
+                                            <span style="color: #999;">No recommendations provided.</span>
+                                        </t>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Disclaimer -->
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <div style="border: 1px solid #ccc; padding: 10px; background-color: #f9f9f9; font-size: 0.85em;">
+                                        <strong>Disclaimer:</strong> This report is prepared based on a visual and technical inspection
+                                        of the appliance. The findings represent the professional opinion of the diagnosing technician
+                                        at the time of assessment. Further investigation may be required to confirm the root cause
+                                        with absolute certainty.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Signature Section -->
+                            <div class="row mt-5">
+                                <div class="col-4 text-center">
+                                    <div style="border-top: 1px solid #333; margin-top: 50px; padding-top: 5px;">
+                                        <strong>Technician Signature</strong>
+                                    </div>
+                                    <t t-if="o.diagnosed_by">
+                                        <div class="mt-2">
+                                            <span t-field="o.diagnosed_by.name"/>
+                                        </div>
+                                    </t>
+                                </div>
+                                <div class="col-4 text-center">
+                                    <div style="border-top: 1px solid #333; margin-top: 50px; padding-top: 5px;">
+                                        <strong>Manager / Supervisor</strong>
+                                    </div>
+                                    <div class="mt-2">
+                                        Date: _________________
+                                    </div>
+                                </div>
+                                <div class="col-4 text-center">
+                                    <div style="border-top: 1px solid #333; margin-top: 50px; padding-top: 5px;">
+                                        <strong>Customer Signature</strong>
+                                    </div>
+                                    <div class="mt-2">
+                                        Date: _________________
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="oe_structure"/>
+                        </div>
+                    </t>
+                </t>
+            </t>
+        </template>
+
+    </data>
+</odoo>

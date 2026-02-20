@@ -11,6 +11,7 @@
                     <group>
                         <group string="Repair Order">
                             <field name="repair_id"/>
+                            <field name="report_type" widget="radio"/>
                         </group>
                         <group string="Report Options">
                             <field name="include_pricing"/>

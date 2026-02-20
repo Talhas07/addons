@@ -13,25 +13,31 @@ class RepairGenerateDiagnosticReport(models.TransientModel):
         required=True,
         readonly=True,
     )
-    
+
+    report_type = fields.Selection([
+        ('standard', 'Standard Report'),
+        ('insurance', 'Insurance Report (Detailed)'),
+    ], string='Report Type', default='standard', required=True,
+       help="Standard: for regular clients. Insurance: comprehensive report with cause of damage, negligence assessment, and detailed technical explanation.")
+
     include_internal_notes = fields.Boolean(
         string='Include Internal Notes',
         default=False,
         help="Include internal notes in the report (for internal use only)."
     )
-    
+
     include_pricing = fields.Boolean(
         string='Include Pricing',
         default=True,
         help="Include pricing information in the report."
     )
-    
+
     set_diagnosis_date = fields.Boolean(
         string='Set Diagnosis Date Now',
         default=True,
         help="Automatically set the diagnosis date to current time if not already set."
     )
-    
+
     diagnosed_by = fields.Many2one(
         'res.users',
         string='Diagnosed By',
@@ -44,11 +50,8 @@ class RepairGenerateDiagnosticReport(models.TransientModel):
         if self.repair_id and self.repair_id.diagnosed_by:
             self.diagnosed_by = self.repair_id.diagnosed_by
 
-    def action_print_report(self):
-        """Generate and print the diagnostic report."""
-        self.ensure_one()
-        
-        # Update diagnosis info if requested
+    def _update_diagnosis_info(self):
+        """Update diagnosis date and technician on the repair order."""
         if self.set_diagnosis_date and not self.repair_id.diagnosis_date:
             self.repair_id.write({
                 'diagnosis_date': fields.Datetime.now(),
@@ -58,25 +61,33 @@ class RepairGenerateDiagnosticReport(models.TransientModel):
             self.repair_id.write({
                 'diagnosed_by': self.diagnosed_by.id,
             })
-        
-        # Generate the report
-        return self.env.ref('repair_extension.action_report_diagnostic').report_action(self.repair_id)
+
+    def action_print_report(self):
+        """Generate and print the diagnostic report."""
+        self.ensure_one()
+        self._update_diagnosis_info()
+
+        if self.report_type == 'insurance':
+            return self.env.ref(
+                'repair_extension.action_report_diagnostic_insurance'
+            ).report_action(self.repair_id)
+
+        return self.env.ref(
+            'repair_extension.action_report_diagnostic'
+        ).report_action(self.repair_id)
 
     def action_send_by_email(self):
         """Send the diagnostic report by email."""
         self.ensure_one()
-        
-        # Update diagnosis info if requested
-        if self.set_diagnosis_date and not self.repair_id.diagnosis_date:
-            self.repair_id.write({
-                'diagnosis_date': fields.Datetime.now(),
-                'diagnosed_by': self.diagnosed_by.id,
-            })
-        
-        # Open email composer with the report attached
-        template = self.env.ref('repair_extension.mail_template_diagnostic_report', raise_if_not_found=False)
-        
-        compose_form = self.env.ref('mail.email_compose_message_wizard_form', raise_if_not_found=False)
+        self._update_diagnosis_info()
+
+        template = self.env.ref(
+            'repair_extension.mail_template_diagnostic_report', raise_if_not_found=False
+        )
+
+        compose_form = self.env.ref(
+            'mail.email_compose_message_wizard_form', raise_if_not_found=False
+        )
         ctx = {
             'default_model': 'repair.order',
             'default_res_ids': [self.repair_id.id],
@@ -86,7 +97,7 @@ class RepairGenerateDiagnosticReport(models.TransientModel):
             'mark_so_as_sent': True,
             'force_email': True,
         }
-        
+
         return {
             'name': _('Send Diagnostic Report'),
             'type': 'ir.actions.act_window',

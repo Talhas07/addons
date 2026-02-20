@@ -66,6 +66,21 @@
                     <button name="action_print_diagnostic_report" 
                             string="Print Diagnostic Report" 
                             type="object"/>
+                    <button name="action_create_diagnostic_invoice"
+                            string="Create Diagnostic Invoice"
+                            type="object"
+                            class="oe_highlight"
+                            invisible="diagnostic_invoice_id"/>
+                    <button name="action_view_diagnostic_invoice"
+                            string="View Diagnostic Invoice"
+                            type="object"
+                            invisible="not diagnostic_invoice_id"/>
+                </xpath>
+                
+                <!-- Add diagnostic_invoice_id and diagnostic_fee as invisible for domain use -->
+                <xpath expr="//sheet" position="inside">
+                    <field name="diagnostic_invoice_id" invisible="1"/>
+                    <field name="diagnostic_fee" invisible="1"/>
                 </xpath>
                 
                 <!-- Add Amounts Section -->
@@ -111,6 +126,21 @@
                                         type="object" 
                                         class="btn-secondary"
                                         icon="fa-clock-o"/>
+                            </group>
+                            <group string="Diagnostic Fee">
+                                <field name="diagnostic_fee"/>
+                            </group>
+                        </group>
+                        <separator string="Insurance / Detailed Assessment"/>
+                        <group>
+                            <group>
+                                <field name="insurance_claim_ref" placeholder="Insurance claim number..."/>
+                                <field name="damage_cause"/>
+                                <field name="negligence_assessment"/>
+                            </group>
+                            <group>
+                                <field name="detailed_technical_explanation" 
+                                       placeholder="Provide a comprehensive technical explanation for insurance purposes..."/>
                             </group>
                         </group>
                     </page>

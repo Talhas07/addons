@@ -154,7 +154,6 @@ class RepairOrder(models.Model):
     
     diagnosis_notes = fields.Html(
         string='Diagnosis Notes',
-        tracking=True,
         help="Technical diagnosis performed by the technician."
     )
     
@@ -214,6 +213,112 @@ class RepairOrder(models.Model):
         string='Accessories Received',
         help="List of accessories received with the appliance."
     )
+
+    # ===== Insurance / Diagnostic Report Fields =====
+    damage_cause = fields.Selection([
+        ('wear_and_tear', 'Normal Wear and Tear'),
+        ('manufacturing_defect', 'Manufacturing Defect'),
+        ('power_surge', 'Power Surge / Electrical'),
+        ('water_damage', 'Water Damage'),
+        ('physical_damage', 'Physical Damage'),
+        ('misuse', 'Misuse / Improper Operation'),
+        ('environmental', 'Environmental Factors'),
+        ('unknown', 'Unknown / Under Investigation'),
+        ('other', 'Other'),
+    ], string='Cause of Damage', help="Primary cause of the damage for insurance reporting.")
+
+    negligence_assessment = fields.Selection([
+        ('no_negligence', 'No Customer Negligence'),
+        ('partial_negligence', 'Partial Customer Negligence'),
+        ('customer_negligence', 'Customer Negligence'),
+        ('undetermined', 'Undetermined'),
+    ], string='Negligence Assessment', default='undetermined',
+       help="Assessment of whether customer negligence contributed to the damage.")
+
+    detailed_technical_explanation = fields.Html(
+        string='Detailed Technical Explanation',
+        help="Comprehensive technical explanation for insurance purposes, including how the damage occurred and contributing factors."
+    )
+
+    insurance_claim_ref = fields.Char(
+        string='Insurance Claim Reference',
+        help="Reference number for the insurance claim."
+    )
+
+    # ===== Diagnostic Invoice =====
+    diagnostic_invoice_id = fields.Many2one(
+        'account.move',
+        string='Diagnostic Invoice',
+        copy=False,
+        readonly=True,
+        tracking=True,
+        domain=[('move_type', '=', 'out_invoice')],
+        help="Invoice for the diagnostic fee."
+    )
+
+    diagnostic_fee = fields.Float(
+        string='Diagnostic Fee',
+        default=200.0,
+        help="Fee charged for the diagnostic assessment."
+    )
+
+    def action_create_diagnostic_invoice(self):
+        """Create a standalone diagnostic invoice without requiring a quotation."""
+        self.ensure_one()
+        if not self.partner_id:
+            raise UserError(_('Please set a customer before creating a diagnostic invoice.'))
+        if self.diagnostic_invoice_id:
+            raise UserError(_('A diagnostic invoice already exists for this repair order.'))
+
+        fpos = self.env['account.fiscal.position']._get_fiscal_position(
+            self.partner_id, delivery=self.address_id
+        )
+
+        invoice_vals = {
+            'move_type': 'out_invoice',
+            'partner_id': self.partner_id.id,
+            'currency_id': self.env.company.currency_id.id,
+            'invoice_origin': self.name,
+            'repair_ids': [(4, self.id)],
+            'fiscal_position_id': fpos.id,
+            'invoice_line_ids': [(0, 0, {
+                'name': _('Diagnostic Fee - %s') % self.name,
+                'quantity': 1,
+                'price_unit': self.diagnostic_fee,
+            })],
+        }
+
+        if self.address_id:
+            invoice_vals['partner_shipping_id'] = self.address_id.id
+
+        invoice = self.env['account.move'].with_company(self.env.company).with_context(
+            default_move_type='out_invoice'
+        ).create(invoice_vals)
+
+        self.diagnostic_invoice_id = invoice.id
+
+        return {
+            'name': _('Diagnostic Invoice'),
+            'type': 'ir.actions.act_window',
+            'view_mode': 'form',
+            'res_model': 'account.move',
+            'res_id': invoice.id,
+            'target': 'current',
+        }
+
+    def action_view_diagnostic_invoice(self):
+        """Open the existing diagnostic invoice."""
+        self.ensure_one()
+        if not self.diagnostic_invoice_id:
+            raise UserError(_('No diagnostic invoice found.'))
+        return {
+            'name': _('Diagnostic Invoice'),
+            'type': 'ir.actions.act_window',
+            'view_mode': 'form',
+            'res_model': 'account.move',
+            'res_id': self.diagnostic_invoice_id.id,
+            'target': 'current',
+        }
 
     def action_set_diagnosis_date(self):
         """Set the diagnosis date and technician when diagnosis is performed."""
